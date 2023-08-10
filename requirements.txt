@@ -1,0 +1,8 @@
+beautifulsoup4
+requests
+openai
+langchain
+tiktoken
+google-auth
+gspread
+functions_framework
