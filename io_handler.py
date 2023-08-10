@@ -50,7 +50,7 @@ def get_table(sheet_url:str, worksheet_name:str) -> List:
         except google.auth.exceptions.TransportError as e:
             logger.error(log.format('スプレッドシート取得失敗', e))
             sleep(1)
-            logger.info(log.format('スプレッドシートからテーブル再取得中'))
+            logger.info(log.format('スプレッドシート再取得中'))
             continue
         else:
             break
