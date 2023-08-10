@@ -1,14 +1,18 @@
 from logging import DEBUG, INFO
 import extract_boolean, extract_data, extract_option
 import io_handler, scrape, summarize, log
+import functions_framework
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 # メインプロセス
-def main() -> None:
+@functions_framework.http
+def main(request) -> None:
     # 入力を取得
-    target_row_idx = 2
+    request_json = request.get_json()
+    sheet_url = request_json['sheet_url']
+    target_row_idx = int(request_json['row'])
     sheet_url = 'https://docs.google.com/spreadsheets/d/1l5Vo_Yz7Gh_s3M-2tDq-wnWLdAkD0rKylxw9IKYQ7M8/edit?usp=sharing'
     logger.debug(log.format('入力情報', 'ターゲット行:{}\nスプレッドシートURL:{}'.format(target_row_idx, sheet_url)))
 
@@ -46,5 +50,4 @@ def main() -> None:
     # 各回答を出力
     io_handler.output_answers(sheet_url, target_row_idx, answers)
     
-if __name__ == '__main__':
-    main()
+    return
