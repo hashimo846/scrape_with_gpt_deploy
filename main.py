@@ -50,4 +50,4 @@ def main(request) -> None:
     # 各回答を出力
     io_handler.output_answers(sheet_url, target_row_idx, answers)
     
-    return
+    return 'OK'

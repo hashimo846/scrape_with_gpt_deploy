@@ -230,6 +230,7 @@ def output_answers(sheet_url:str, target_row_idx:int, answers:Dict) -> None :
         outputs[output_columns[key]] = ', '.join(answers['option'][key])
     # set values
     set_answers(sheet_url, target_row_idx, [outputs])
+    logger.info(log.format('スプレッドシートへの書き出し完了'))
 
 def main():
     pass
