@@ -84,7 +84,7 @@ def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
         try:
             json_dict = json.loads(json_str)
         except Exception as e:
-            logger.warning(log.format('JSON形式で出力されていません'), e)
+            logger.warning(log.format('JSON形式で出力されていません', e))
             logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answer))
             json_dict = dict()
         all_dict |= json_dict
