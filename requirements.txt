@@ -6,3 +6,4 @@ tiktoken
 google-auth
 gspread
 functions_framework
+certifi

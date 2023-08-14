@@ -26,7 +26,7 @@ def send(prompts:List[str]) -> str:
     # send prompt
     while True:
         try:
-            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 30)
+            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', e))
             sleep(1)
