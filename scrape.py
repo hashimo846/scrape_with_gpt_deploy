@@ -8,8 +8,12 @@ from typing import List
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
+# HTTPリクエスト時のユーザーエージェント
+USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
+HEADER = {'User-Agent': user_agent}
+
 # 商品ページから全テキストを取得 (ページからテキストを抽出できない場合はinput_textを入力)
-def scrape_all_text(url:str = None, input_text:str = None) -> str:
+def scrape_all_text(url:str = None,headers = HEADER, input_text:str = None) -> str:
     # ページから文字列を抽出 or 引数から文字列を抽出
     if input_text == None:
         # URLからページを取得
