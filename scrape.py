@@ -23,7 +23,7 @@ def scrape_all_text(url:str = None,headers = HEADER, input_text:str = None) -> s
                 html = BeautifulSoup(r.content, 'html.parser')
                 text = html.text
         except Exception as e:
-            logger.error(log.format('アクセス失敗',e))
+            logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
             return None
     else:
         text = input_text
