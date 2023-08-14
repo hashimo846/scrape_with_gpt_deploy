@@ -91,6 +91,7 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
             json_dict = json.loads(json_str)
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
+            logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answers[i]))
             json_dict = {'':''}
         key_list = list(json_dict.keys())
         # 有効な項目名のみ抽出
