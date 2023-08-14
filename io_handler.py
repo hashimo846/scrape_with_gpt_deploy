@@ -15,7 +15,6 @@ logger = log.init(__name__, DEBUG)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 MASTER_WORKSHEET = '項目_詳細情報'
 PRODUCT_WORKSHHET = '商品_詳細情報'
-OUTPUT_COLUMN = 7
 
 # Jsonファイルの読み込み
 def read_json(file_path:str) -> Dict:
