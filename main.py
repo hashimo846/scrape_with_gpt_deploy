@@ -29,7 +29,7 @@ def main(request) -> None:
 
     # URLからページの全文を取得
     full_text = scrape.scrape_all_text(url = product['reference_url'], input_text=None)
-    if full_text == None: return '参照URLへのクセス失敗'
+    if full_text == None: return '参照URLへのアクセス失敗'
     logger.debug(log.format('Webページから取得した全文', full_text))
     
     # 全文から要約文を取得
