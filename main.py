@@ -19,17 +19,17 @@ def main(request) -> None:
 
     # マスタ情報を取得
     master_items = io_handler.get_master_items(sheet_url)
-    if master_items == None: return 'マスタ情報の取得に失敗しました'
+    if master_items == None: return 'マスタ情報の取得失敗'
     logger.debug(log.format('マスタ情報', master_items))
 
     # 商品情報を取得
     product = io_handler.get_product(sheet_url, target_row_idx)
-    if product == None: return '商品情報の取得に失敗しました'
+    if product == None: return '商品情報の取得失敗'
     logger.debug(log.format('商品情報', product))
 
     # URLからページの全文を取得
     full_text = scrape.scrape_all_text(url = product['reference_url'], input_text=None)
-    if full_text == None: return 'URLへのアクセスに失敗しました'
+    if full_text == None: return '参照URLへのクセス失敗'
     logger.debug(log.format('Webページから取得した全文', full_text))
     
     # 全文から要約文を取得
