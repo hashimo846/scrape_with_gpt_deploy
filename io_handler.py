@@ -186,24 +186,15 @@ def get_all_products() -> List:
 
 # set values
 def set_answers(sheet_url:str, target_row_idx:int, target_column_idx:int, values:List[str]) -> None:
-    while True:
-        try:
-            spreadsheet = get_spreadsheet(sheet_url)
-            worksheet = spreadsheet.worksheet(PRODUCT_WORKSHHET)
-            values_size = len(values[0])
-            start_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+1)
-            end_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+values_size)
-            worksheet.update('{}:{}'.format(start_cell, end_cell), values)
-            '''spreadのバージョン6になると、引数の順番が逆になる
-            UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
-            '''
-        except Exception as e:
-            logger.error(log.format('スプレッドシートへの書き出し失敗', e))
-            sleep(1)
-            logger.info(log.format('スプレッドシートへ再書き出し中'))
-            break
-        else:
-            break
+    spreadsheet = get_spreadsheet(sheet_url)
+    worksheet = spreadsheet.worksheet(PRODUCT_WORKSHHET)
+    values_size = len(values[0])
+    start_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+1)
+    end_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+values_size)
+    worksheet.update('{}:{}'.format(start_cell, end_cell), values)
+    '''spreadのバージョン6になると、引数の順番が逆になる
+    UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
+    '''
 
 # 出力先のカラムのヘッダとインデックスを取得
 def get_output_columns(sheet_url:str, target_column_idx:int) -> Dict:
@@ -228,8 +219,14 @@ def output_answers(sheet_url:str, target_row_idx:int, target_column_idx:int, ans
     for key in answers['option'].keys():
         outputs[output_columns[key]] = ', '.join(answers['option'][key])
     # set values
-    set_answers(sheet_url, target_row_idx, target_column_idx, [outputs])
-    logger.info(log.format('スプレッドシートへの書き出し完了'))
+    try:
+        set_answers(sheet_url, target_row_idx, target_column_idx, [outputs])
+    except:
+        logger.error(log.format('スプレッドシートへの書き出し失敗'))
+        return 'error'
+    else:
+        logger.info(log.format('スプレッドシートへの書き出し完了'))
+        return 'ok'
 
 def main():
     pass

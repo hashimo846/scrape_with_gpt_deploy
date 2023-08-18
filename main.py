@@ -48,6 +48,8 @@ def main(request) -> None:
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
 
     # 各回答を出力
-    io_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
+    status = io_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
+    if status == 'error': return '参照URLへのアクセス失敗'   
     
+    # 正常終了
     return '実行終了'
