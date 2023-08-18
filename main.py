@@ -14,7 +14,6 @@ def main(request) -> None:
     sheet_url = request_json['sheet_url']
     target_row_idx = int(request_json['row'])
     target_column_idx = int(request_json['column'])
-    sheet_url = 'https://docs.google.com/spreadsheets/d/1l5Vo_Yz7Gh_s3M-2tDq-wnWLdAkD0rKylxw9IKYQ7M8/edit?usp=sharing'
     logger.debug(log.format('入力情報', 'ターゲット行:{}\nスプレッドシートURL:{}'.format(target_row_idx, sheet_url)))
 
     # マスタ情報を取得
