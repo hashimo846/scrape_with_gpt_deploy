@@ -49,7 +49,7 @@ def main(request) -> None:
 
     # 各回答を出力
     status = io_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
-    if status == 'error': return '参照URLへのアクセス失敗'   
+    if status == 'error': return 'スプレッドシートへの書き込み失敗'   
     
     # 正常終了
     return '実行終了'
