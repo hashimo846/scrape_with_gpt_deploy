@@ -22,7 +22,9 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     logger.debug(log.format('商品情報', product))
 
     # URLからページの全文を取得
-    full_text = scrape.scrape_all_text(url = product['reference_url'], input_text=None)
+    url_list = product['reference_url'].split('\n')
+    logger.debug(log.format('WebページのURL', url_list))
+    full_text = scrape.scrape_all(url_list)
     if full_text == None: return '参照URLへのアクセス失敗'
     logger.debug(log.format('Webページから取得した全文', full_text))
     
