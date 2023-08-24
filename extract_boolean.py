@@ -100,7 +100,7 @@ def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
         elif json_dict['出力'] == '該当しない':
             answers_dict[items[i]] = False
         else:
-            answers_dict[items[i]] = None
+            answers_dict[items[i]] = ''
     return answers_dict
 
 # 対象項目の情報を抽出
