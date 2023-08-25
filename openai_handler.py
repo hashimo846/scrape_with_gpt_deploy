@@ -16,13 +16,9 @@ openai.organization = os.getenv("OPENAI_ORGANIZATION")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # プロンプトを送信して回答を取得
-def send(prompts:List[str]) -> str:
+def send(prompt:str) -> str:
     # make messages
-    messages = [{'role':'user', 'content':prompts[0]}]
-    for prompt in prompts[1:]:
-        messages.append({'role':'assistant', 'content':'<ok>'})
-        messages.append({'role':'user', 'content':prompt})
-
+    messages = [{'role':'user', 'content':prompt}]
     # send prompt
     while True:
         try:

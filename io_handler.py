@@ -134,6 +134,7 @@ def get_master_items(sheet_url:str) -> Dict:
 
 # extract valid columns from product table
 def extract_valid_columns(target_row:List) -> Dict:
+    # TOOD: 型番から商品IDに変更, 実行ステータスを追加
     important_keys = {'JAN(変更不可)':'jan', 'メーカー名(変更不可)':'maker', '商品名(変更不可)':'name', '型番(変更不可)':'model_number', '参照URL(編集可能)':'reference_url', '実行ボタン':'execute_button'}
     valid_columns = {}
     for idx, value in enumerate(target_row):
