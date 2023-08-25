@@ -44,6 +44,8 @@ def summarize(input_text:str, product:Dict) -> str:
     while len(split_texts) > 1:    
         # GPTに入力用のプロンプトを作成
         scrape_prompts = [str_template(product).format(text) for text in split_texts]
+        for i in range(len(scrape_prompts)):
+            logger.debug(log.format('プロンプト'+str(i+1), scrape_prompts[i]))
         # GPTの回答を取得
         extract_texts = [openai_handler.send(prompt) for prompt in scrape_prompts]
         # 回答を結合
