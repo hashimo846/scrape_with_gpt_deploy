@@ -67,7 +67,7 @@ def on_http_trigger(request) -> str:
 # ローカル実行時のプロセス
 def main() -> None:
     # 入力を取得
-    sheet_url = 'https://docs.google.com/spreadsheets/d/1F2LqvY7mbVP3elaVm9JFKlzJ8vCI7kHLqHREDmQKIgk/edit#gid=1508122646'
+    sheet_url = 'https://docs.google.com/spreadsheets/d/1muIHw9Rolcjsi4KUW5XE45B0T3-5frBe1ZJK93LN9ZY/edit?usp=sharing'
     target_row_idx = 2
     target_column_idx = 7
 

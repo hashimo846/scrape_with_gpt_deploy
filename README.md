@@ -18,7 +18,7 @@ docker-compose up -d
 ```
 ### スクリプトの実行方法
 ```shell
-docker-compose exec scrape_with_gpt_deploy python3 main.py
+docker-compose exec python3 python3 main.py
 ```
 
 ### コンテナ再構築
