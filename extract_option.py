@@ -65,6 +65,8 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
             logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answers[i]))
             json_dict = {'':''}
         key_list = list(json_dict.keys())
+        if len(key_list) == 0:
+            continue
         # 有効な項目名のみ抽出
         if key_list[0] in item_names:
             answers_dict[key_list[0]] = []

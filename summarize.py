@@ -34,10 +34,8 @@ def str_question(product:Dict) -> str:
 def str_important_items(master_items:Dict) -> str:
     item_names = []
     for key in master_items.keys():
-        print('key = ' + key)
         for item in master_items[key]:
             item_names.append(item['name'])
-            print('item = ' + item['name'])
     text = '#重要項目\n'
     text += ','.join(item_names) + '\n'
     return text
@@ -76,8 +74,10 @@ def summarize(input_text:str, product:Dict, master_items:Dict) -> str:
     while len(split_texts) > 1:    
         # GPTに入力用のプロンプトを作成
         scrape_prompts = [str_prompt(text, product, master_items) for text in split_texts]
+        '''
         for i in range(len(scrape_prompts)):
             logger.debug(log.format('プロンプト'+str(i+1), scrape_prompts[i]))
+        '''
         # GPTの回答を取得
         extract_texts = [openai_handler.send(prompt) for prompt in scrape_prompts]
         # 回答を結合
