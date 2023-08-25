@@ -15,9 +15,9 @@ logger = log.init(__name__, DEBUG)
 def str_question(item:str) -> str:
     text = '今から入力、選択肢、期待する出力形式を与えます。\n'
     text += '入力のみを用いて、'
-    text += '「' + item + '」に該当するかを調べ、その結果を選択肢の中から一つだけ選び、出力形式に従ってJSONで出力してください。\n'
+    text += '「' + item['name'] + '」に該当するかを調べ、その結果を選択肢の中から一つだけ選び、出力形式に従ってJSONで出力してください。\n'
     text += 'ただし、選択肢にないものは出力に含めないでください。\n'
-    text += 'また、入力に' + item + 'に関する記載がない場合は、「不明」を出力してください。\n'
+    text += 'また、入力に' + item['name'] + 'に関する記載がない場合は、「不明」を出力してください。\n'
     return text
 
 # プロンプト中の選択肢部分の文字列を返す
@@ -28,7 +28,7 @@ def str_option(option = OPTION) -> str:
     return text
 
 # プロンプト中の出力形式部分の文字列を返す
-def str_format(item:str) -> str:
+def str_format() -> str:
     text = '#出力形式\n'
     text += '{\"' + '出力' +'\":\"\"}' + '\n'
     return text
@@ -45,18 +45,18 @@ def str_input(input_text:str) -> str:
     return text
 
 # 生成したプロンプトのリスト返す
-def str_prompt(item:str, input_text:str) -> List[str]:
+def str_prompt(item:Dict, input_text:str) -> List[str]:
     prompt = '\n'.join([
         str_question(item), 
         str_option(),
-        str_format(item), 
+        str_format(), 
         str_input(input_text),
         str_output(),
     ])
     return prompt
 
 # 回答をパース
-def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
+def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
     answers_dict = dict()
     for i in range(len(items)):
         json_str = extract_json(answers[i])
@@ -67,11 +67,11 @@ def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
             logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answers[i]))
             json_dict = {'出力': '不明'}
         if json_dict['出力'] == '該当する':
-            answers_dict[items[i]] = True
+            answers_dict[items[i]['name']] = True
         elif json_dict['出力'] == '該当しない':
-            answers_dict[items[i]] = False
+            answers_dict[items[i]['name']] = False
         else:
-            answers_dict[items[i]] = ''
+            answers_dict[items[i]['name']] = ''
     return answers_dict
 
 # 対象項目の情報を抽出

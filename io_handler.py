@@ -80,7 +80,7 @@ def get_boolean_items(master:Dict) -> List:
     items, i = [], 0
     while i < len(master['formats']):
         if master['formats'][i] == '二値':
-            items.append(master['features'][i])
+            items.append({'name':master['features'][i]})
         i += 1
     return items
 

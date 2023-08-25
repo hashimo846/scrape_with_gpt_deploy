@@ -29,7 +29,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     logger.debug(log.format('Webページから取得した全文', full_text))
     
     # 全文から要約文を取得
-    summarize_text = summarize.summarize(full_text, product)
+    summarize_text = summarize.summarize(full_text, product, master_items)
     logger.debug(log.format('要約文', summarize_text))
 
     # 要約文から各項目を抽出
