@@ -31,28 +31,6 @@ def split_by_token(input_text, max_token = MAX_TOKEN, overlap_token = OVERLAP_TO
     texts = text_splitter.split_text(input_text)
     return texts
 
-# 決められたトークン数ごとに分割する
-def split_input(input_text, max_input_token = MAX_INPUT_TOKEN):
-    text_splitter = TokenTextSplitter(chunk_size=max_input_token, chunk_overlap=0)
-    texts = text_splitter.split_text(input_text)
-    return texts
-
-# OpenAI APIの認証
-def authentication_openai():
-    openai.organization = os.getenv("OPENAI_ORGANIZATION")
-    openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# プロンプトを送信して回答を取得
-def send_prompt(prompt):
-    # make messages
-    messages = [{'role':'user', 'content':prompt}]
-    # send prompt
-    response = openai.ChatCompletion.create(
-        model = 'gpt-3.5-turbo',
-        messages = messages
-    )
-    return response.choices[0]['message']['content'].strip()
-
 # 商品ページからテキストを取得してGPTに入力し、商品情報をスクレイピング
 def summarize(input_text:str, model_number:str = None) -> str:
     # 入力文が長い場合は複数に分割
@@ -61,7 +39,6 @@ def summarize(input_text:str, model_number:str = None) -> str:
     scrape_prompts = [str_template(model_number).format(text) for text in split_texts]
     # GPTの回答を取得
     extract_texts = [openai_handler.send([prompt]) for prompt in scrape_prompts]
-    #extract_texts = [send_prompt(prompt) for prompt in scrape_prompts]
     # 回答を結合
     extract_text = '\n'.join(extract_texts)
     return extract_text
