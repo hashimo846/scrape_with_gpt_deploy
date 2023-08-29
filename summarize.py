@@ -25,9 +25,8 @@ def str_question(product:Dict) -> str:
         text += '製品' + product['name'] + 'の'
     else:
         text += '商品の'
-    text += '仕様や性能を示す情報を抽出してください。\n'
+    text += '性能や特徴を示す情報を、定量的な数値情報や固有名詞は可能な限り含めて抽出してください。\n'
     text += '特に、以下に示す重要項目に関する情報がある場合は可能な限り出力に含めてください。\n'
-    text += 'また、定量的な数値情報や固有名詞は可能は限り出力に含めてください。\n'
     return text
 
 # プロンプト中の重要項目の文字列を返す
@@ -70,8 +69,10 @@ def split_by_token(input_text:str, max_token:int = MAX_INPUT_TOKEN, overlap_toke
 def summarize(input_text:str, product:Dict, master_items:Dict) -> str:
     # 入力文が長い場合は分割
     split_texts = split_by_token(input_text)
+    # 最低一回は要約する
+    first_time = True
     # 分割が不要なトークン長になるまで要約
-    while len(split_texts) > 1:    
+    while len(split_texts) > 1 or first_time:    
         # GPTに入力用のプロンプトを作成
         scrape_prompts = [str_prompt(text, product, master_items) for text in split_texts]
         '''
@@ -84,4 +85,6 @@ def summarize(input_text:str, product:Dict, master_items:Dict) -> str:
         extract_text = '\n'.join(extract_texts)
         # 入力が長い場合は再分割
         split_texts = split_by_token(extract_text)
+        # 2回目以降フラグ
+        first_time = False
     return split_texts[0]
