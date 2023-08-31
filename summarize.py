@@ -1,8 +1,6 @@
-from bs4 import BeautifulSoup
-from langchain.text_splitter import TokenTextSplitter
+from langchain.text_splitter import TokenTextSplitter, CharacterTextSplitter
 import openai
 import os
-import requests
 import openai_handler
 import log
 from logging import DEBUG, INFO
@@ -20,13 +18,19 @@ MAX_INPUT_TOKEN = int(os.getenv("MAX_INPUT_TOKEN"))
 
 # プロンプト中の質問部分の文字列を返す
 def str_question(product:Dict) -> str:
-    text = 'これから与える入力のみを用いて、'
-    if product['name'] != '': 
-        text += '製品' + product['name'] + 'の'
-    else:
-        text += '商品の'
-    text += '性能や特徴を示す情報を、定量的な数値情報や固有名詞は可能な限り含めて抽出してください。\n'
-    text += '特に、以下に示す重要項目に関する情報がある場合は可能な限り出力に含めてください。\n'
+    text = '今から与える文章のみを用いて、'
+    text += '商品' + product['name'] + 'に関する情報の要約文を出力してください。\n'
+    text += '要約文には可能な限り固有名詞や定量的な情報を含むようにしてください。\n'
+    text += 'また、次の重要項目に関する情報が文章中にある場合は、必ず要約に含めてください。\n'
+    
+    return text
+
+def str_refine_question(product:Dict, existing_answer:str) -> str:
+    text = 'あなたの仕事は、商品'+ product['name'] +'に関する情報の最終的な要約文を作ることです。\n'
+    text += '途中までの要約があります： ' + existing_answer + '\n'
+    text += '必要に応じて今から与える文章を使い、さらに良い要約を生成してください。\n'
+    text += '要約文には可能な限り固有名詞や定量的な情報を含むようにしてください。\n'
+    text += 'また、次の重要項目に関する情報が文章中にある場合は、必ず要約に含めてください。\n'
     return text
 
 # プロンプト中の重要項目の文字列を返す
@@ -36,23 +40,33 @@ def str_important_items(master_items:Dict) -> str:
         for item in master_items[key]:
             item_names.append(item['name'])
     text = '#重要項目\n'
-    text += ','.join(item_names) + '\n'
+    text += ', '.join(item_names) + '\n'
     return text
 
 # プロンプト中の入力部分の文字列を返す
 def str_input(input_text:str) -> str:
-    text = '#入力\n'
+    text = '#文章\n'
     text += input_text + '\n'
     return text
 
 # プロンプト中の出力部分の文字列を返す
 def str_output() -> str:
-    return '#出力'
+    return '#要約文'
 
 # プロンプトの文字列を返す
-def str_prompt(input_text:str, product:Dict, master_items:Dict) -> str:
+def str_summarize_prompt(input_text:str, product:Dict, master_items:Dict) -> str:
     prompt = '\n'.join([
         str_question(product), 
+        str_important_items(master_items),
+        str_input(input_text),
+        str_output(),
+    ])
+    return prompt
+
+# refine用のプロンプトの文字列を返す
+def str_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict) -> str:
+    prompt = '\n'.join([
+        str_refine_question(product, existing_answer), 
         str_important_items(master_items),
         str_input(input_text),
         str_output(),
@@ -67,24 +81,48 @@ def split_by_token(input_text:str, max_token:int = MAX_INPUT_TOKEN, overlap_toke
 
 # 商品ページからテキストを取得してGPTに入力し、商品情報をスクレイピング
 def summarize(input_text:str, product:Dict, master_items:Dict) -> str:
+    # return map_reduce(input_text, product, master_items)
+    return refine(input_text, product, master_items)
+
+# map-reduceアルゴリズムで要約
+def map_reduce(input_text:str, product:Dict, master_items:Dict) -> str:
     # 入力文が長い場合は分割
     split_texts = split_by_token(input_text)
-    # 最低一回は要約する
-    first_time = True
     # 分割が不要なトークン長になるまで要約
-    while len(split_texts) > 1 or first_time:    
+    while len(split_texts) > 1:    
         # GPTに入力用のプロンプトを作成
-        scrape_prompts = [str_prompt(text, product, master_items) for text in split_texts]
-        '''
-        for i in range(len(scrape_prompts)):
-            logger.debug(log.format('プロンプト'+str(i+1), scrape_prompts[i]))
-        '''
+        prompts = [str_summarize_prompt(text, product, master_items) for text in split_texts]
+        # 要約のプロンプトをログ出力
+        for i in range(len(prompts)):
+            logger.debug(log.format('プロンプト'+str(i+1), prompts[i]))
         # GPTの回答を取得
-        extract_texts = [openai_handler.send(prompt) for prompt in scrape_prompts]
+        answer_texts = [openai_handler.send(prompt) for prompt in prompts]
         # 回答を結合
-        extract_text = '\n'.join(extract_texts)
+        answer_text = '\n'.join(answer_texts)
         # 入力が長い場合は再分割
-        split_texts = split_by_token(extract_text)
-        # 2回目以降フラグ
-        first_time = False
-    return split_texts[0]
+        split_texts = split_by_token(answer_text)
+    # 結合された要約文を最後に要約（はじめから分割無しの場合は最低1回の要約が保証される）
+    prompt = str_summarize_prompt(split_texts[0], product, master_items)
+    logger.debug(log.format('最終要約プロンプト', prompt))
+    answer_text = openai_handler.send(prompt)
+    return answer_text
+
+# refineアルゴリズムで要約
+def refine(input_text:str, product:Dict, master_items:Dict) -> str:
+    # 入力文が長い場合は分割(反復して要約するたびにプロンプトが長くなるので、1000Token短めに区切る)
+    split_texts = split_by_token(input_text = input_text, max_token = MAX_TOKEN - 1000)
+    # 初めの分割の要約
+    prompt = str_summarize_prompt(split_texts[0], product, master_items)
+    answer_text = openai_handler.send(prompt)
+    logger.debug(log.format('初回要約プロンプト', prompt))
+
+    # 二個目以降の分割の要約
+    for split_text in split_texts[1:]:
+        # GPTに入力用のプロンプトを作成
+        prompt = str_refine_prompt(answer_text, split_text, product, master_items)
+        # 要約のプロンプトをログ出力
+        logger.debug(log.format('二回目以降要約プロンプト', prompt))
+        # GPTの回答を取得
+        answer_text = openai_handler.send(prompt)
+    return answer_text
+
