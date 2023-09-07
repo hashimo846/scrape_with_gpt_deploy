@@ -34,6 +34,17 @@ def scrape(url:str = None):
     text = text.replace('\r', '').replace('\v', '').replace('\f', '')
     return text
 
+# URLからページのソースを取得
+def scrape_page_source(url:str = None):
+    logger.info(log.format('URLからテキストを取得中', url))        
+    try:
+        with requests.get(url, timeout=(3.0, 7.5), headers = HEADERS) as r:
+            html = BeautifulSoup(r.content, 'html.parser')
+    except Exception as e:
+        logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
+        return None
+    return html
+
 # 各URLのテキストを取得して結合
 def scrape_all(url_list:List[str] = ['']) -> str:
     # 各URLからテキストを取得
@@ -49,7 +60,9 @@ def scrape_all(url_list:List[str] = ['']) -> str:
         return ''.join(texts)
 
 def main():
-    pass
+    url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
+    page_source = scrape_page_source(url)
+    print(page_source)
 
 if __name__ == "__main__":
     main()

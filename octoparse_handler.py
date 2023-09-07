@@ -8,6 +8,7 @@ from typing import List, Dict
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
+# Octoparseの認証情報
 OCTOPARSE_USERNAME = os.getenv('OCTOPARSE_USERNAME')
 OCTOPARSE_PASSWORD = os.getenv('OCTOPARSE_PASSWORD')
 OCTOPARSE_API_BASE_URL = 'https://openapi.octoparse.com/'
@@ -98,8 +99,17 @@ def update_action_url(access_token:str, task_id:str, action_id:str, url:str, bas
     response = requests.post(base_url+path, headers=header, json=body, timeout = 3.0).json()
     return response
 
+# タスクIDを指定してクラウド上でタスクを実行
 def start_task(access_token:str, task_id:str, base_url:str = OCTOPARSE_API_BASE_URL) -> Dict:
     path = 'cloudextraction/start'
+    header = {'Authorization': 'Bearer ' + access_token, 'Content-Type': 'application/json'}
+    body = {'taskId': task_id}
+    response = requests.post(base_url+path, headers=header, json=body, timeout = 3.0).json()
+    return response
+
+# タスクIDを指定してクラウド上でタスクを停止
+def stop_task(access_token:str, task_id:str, base_url:str = OCTOPARSE_API_BASE_URL) -> Dict:
+    path = 'cloudextraction/stop'
     header = {'Authorization': 'Bearer ' + access_token, 'Content-Type': 'application/json'}
     body = {'taskId': task_id}
     response = requests.post(base_url+path, headers=header, json=body, timeout = 3.0).json()
@@ -117,14 +127,14 @@ def main():
     logger.debug(log.format('アクセストークン更新', response))
     tasks = get_tasks(response['data']['access_token'], group_id)
     logger.debug(log.format('タスク一覧取得', tasks))
-    task_id = get_task_id(response['data']['access_token'], group_id, 'Scrape Amazon')
+    task_id = get_task_id(response['data']['access_token'], group_id, 'Scrape HTML')
     logger.debug(log.format('タスクID取得', task_id))
 
     response = refresh_access_token(response['data']['refresh_token'])
     logger.debug(log.format('アクセストークン更新', response))
     actions = get_actions(response['data']['access_token'], task_id)
     logger.debug(log.format('アクション一覧取得', actions))
-    action_id = get_action_id(response['data']['access_token'], task_id, 'open_page')
+    action_id = get_action_id(response['data']['access_token'], task_id, 'open page')
     logger.debug(log.format('アクションID取得', action_id))
 
     response = refresh_access_token(response['data']['refresh_token'])
@@ -134,6 +144,10 @@ def main():
     logger.debug(log.format('アクションのパラメータ更新', status))
     actions = get_actions(response['data']['access_token'], task_id)
     logger.debug(log.format('アクション一覧取得', actions))
+
+    response = start_task(response['data']['access_token'], task_id)
+    logger.debug(log.format('タスク開始', response))
+    
     # TODO:以上のような処理を事前に実行し、得られたID群を定数として定義し、API呼び出し回数を減らす。
     # TODO:APIアクセス時にアクセストークンの期限が切れないように、API呼び出し前にアクセストークンの期限を更新する（or アクセストークンを発行する）。
 
