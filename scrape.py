@@ -13,6 +13,9 @@ logger = log.init(__name__, DEBUG)
 USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
 HEADERS = {'User-Agent': USER_AGENT}
 
+# ScraperAPIのAPIのキー
+SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
+
 # 指定したURLのページソースを取得
 def get_page_source(url:str = None):
     logger.info(log.format('URLへアクセス中', url))
@@ -26,13 +29,18 @@ def get_page_source(url:str = None):
 
 # 各URLのテキストを取得して結合
 def scrape_all(url_list:List[str] = ['']) -> str:
-    # 各URLからテキストを取得
+    # 各URLから抽出したテキストを格納するリスト
     texts = []
+    # 各URLからテキストを取得
     for url in url_list:
         # ページソースを取得
         source = get_page_source(url)
-        # テキストを取得
-        text = parser.parse_text(source)
+        # ドメインによってパーサを切り替えてテキストを取得
+        domain = parser.judge_domain(url)
+        if domain == 'amazon':
+            text = parser.parse_amazon(source)
+        elif domain == 'others':
+            text = parser.parse_text(source)
         # テキストが取得できなかった場合はスキップ
         if text != None:
             texts.append(text)
