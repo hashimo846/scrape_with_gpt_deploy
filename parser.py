@@ -31,15 +31,24 @@ def judge_domain(url:str):
 
 # 不要な文字を削除してテキストのみ抽出
 def strip_text(text:str = ''):
-    text = text.replace(' ', '').replace('　', '').replace('\n', '').replace('\t', '')
-    text = text.replace('\r', '').replace('\v', '').replace('\f', '')
-    return text
-
-# 不要な文字を削除してテキストのみ抽出
-def weak_strip_text(text:str = ''):
+    # 不要な文字を削除
     text = text.replace('\n', '').replace('\t', '')
     text = text.replace('\r', '').replace('\v', '').replace('\f', '')
+    # 複数個連続するスペースを一つにする
+    valid_texts = []
+    for word in text.split(' '):
+        if word != '':
+            valid_texts.append(word)
+    text = ' '.join(valid_texts)
     return text
+
+# BeautifulSoupオブジェクトから指定したこのタグからテキストを抽出（タグが見つからない場合はNoneを返す）
+def extract_text(parent:BeautifulSoup, tag:str, id:str = None):
+    child = parent.find(tag, id=id)
+    if child != None:
+        return child.text
+    else:
+        return None
 
 # URLから全てのテキストを取得
 def parse_text(html_source:str):
@@ -55,49 +64,44 @@ def parse_amazon(html_source:str):
     # 抽出した情報を格納するDict
     extracted_texts = dict()
 
-    # HTMLソースを解析
+    # <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
     html = BeautifulSoup(html_source, 'html.parser')
-    # body部分を取得
     body = html.find('body')
-    # <div id="dp">を抽出
     dp = body.find('div', id='dp')
-    # <div id="dp-container">を抽出
     dp_container = dp.find('div', id='dp-container')
-
-    # <div id="ppd">を抽出
+    # <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
     ppd = dp_container.find('div', id='ppd')
-    # <div id="centerCol">を抽出
     centerCol = ppd.find('div', id='centerCol')
-    # <div id="title_feature_div">を抽出（商品タイトル部分）
-    title_feature_div = centerCol.find('div', id='title_feature_div')
-    extracted_texts['title_feature_div'] = title_feature_div.text
-    # <div id="productOverview_feature_div">を抽出（商品概要部分）
-    productOverview_feature_div = centerCol.find('div', id='productOverview_feature_div')
-    extracted_texts['productOverview_feature_div'] = productOverview_feature_div.text
-    # <div id="featurebullets_feature_div">を抽出（商品詳細部分）
-    featurebullets_feature_div = centerCol.find('div', id='featurebullets_feature_div')
-    extracted_texts['featurebullets_feature_div'] = featurebullets_feature_div.text
 
-    # dp_container内のdiv要素を全て週出
-    dp_container_divs = dp_container.find_all('div', recursive = False)
-    # dp_container_divs内の<div id="productDetails_feature_div">の次から<div id="similarities_feature_div">の前までのdiv要素を抽出
-    start = False
-    count = 0
-    for div in dp_container_divs:
-        if div.get('id') == 'productDetails_feature_div':
-            start = True
-            continue
-        elif div.get('id') == 'similarities_feature_div' and div.find('div').get('id') == 'sims-consolidated-4_feature_div':
-            break
-        elif start and strip_text(div.text) != '':
-            count += 1
-            extracted_texts['product_description_sections_{}'.format(count)] = div.text    
+    # 必要な部分からテキストを抽出
+    extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
+    extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
+    extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
+    extracted_texts['important'] = extract_text(parent = dp_container, tag = 'div', id = 'importantInformation_feature_div')
+    extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
+    # A+コンテンツのテキストを抽出
+    for div in dp_container.find_all('div', recursive = False):
+        if 'aplus' in div.get('id'):
+            extracted_texts[div.get('id')] = extract_text(parent = dp_container, tag = 'div', id = div.get('id'))
         
     # 抽出したテキストを結合
-    texts = []
+    log_text = output_text = ''
     for key in extracted_texts.keys():
-        text = extracted_texts[key]
-        text = weak_strip_text(text)
-        texts.append(text)
-    text = '\n'.join(texts)
-    return text
+        # ログ出力用のテキスト生成
+        log_text += '--- {} ---\n'.format(key)
+        log_text += strip_text(str(extracted_texts[key])) + '\n'
+        # 抽出したテキストがNoneの場合はスキップ
+        if extracted_texts[key] == None:
+            continue
+        # 不要な文字を削除
+        text = strip_text(extracted_texts[key])
+        # 関数の出力用のテキスト生成
+        output_text += text + '\n'
+    logger.debug(log.format('Amazonから抽出したテキスト', log_text))
+    return output_text
+
+def main():
+    pass
+
+if __name__ == '__main__':
+    main()
