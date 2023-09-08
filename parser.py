@@ -72,7 +72,7 @@ def parse_amazon(html_source:str):
     extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
     extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
     extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
-    extracted_texts['important'] = extract_text(parent = dp_container, tag = 'div', id = 'importantInformation_feature_div')
+    #extracted_texts['important'] = extract_text(parent = dp_container, tag = 'div', id = 'importantInformation_feature_div')
     extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
     # A+コンテンツのテキストを抽出
     for div in dp_container.find_all('div', recursive = False):
