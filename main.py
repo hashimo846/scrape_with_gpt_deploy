@@ -1,6 +1,6 @@
 from logging import DEBUG, INFO
 import extract_boolean, extract_data, extract_option
-import io_handler, scrape, summarize, log
+import io_handler, scraper, summarize, log
 import functions_framework
 
 # ロガーの初期化
@@ -24,7 +24,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     # URLからページの全文を取得
     url_list = product['reference_url'].split('\n')
     logger.debug(log.format('WebページのURL', url_list))
-    full_text = scrape.scrape_all(url_list)
+    full_text = scraper.scrape_all(url_list)
     if full_text == None: return '参照URLへのアクセス失敗'
     logger.debug(log.format('Webページから取得した全文', full_text))
     
