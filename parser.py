@@ -8,24 +8,19 @@ logger = log.init(__name__, DEBUG)
 
 # 明示的に特定の処理を行いたいサイトのドメイン一覧
 DOMAIN_TYPES = {
-    'amazon': ['www.amazon.co.jp', 'amazon.co.jp', 'amazon.jp'],
+    'amazon': ['amazon.co.jp', 'amazon.jp', 'amzn.asia'],
     'yahoo': ['shopping.yahoo.co.jp', 'store.shopping.yahoo.co.jp'],
     'rakuten': ['www.rakuten.co.jp', 'item.rakuten.co.jp']
 }
 
 # URLのドメインを判定
 def judge_domain(url:str):
-    # URLのドメイン部分を取得
-    splitted_url = url.split('/')
-    if len(splitted_url) < 2:
-        logger.error(log.format('URLが不正です', url))
-        return None
-    else:
-        domain = splitted_url[2]
     # ドメインがどのサイトであるか判別
     for key in DOMAIN_TYPES.keys():
-        if domain in DOMAIN_TYPES[key]:
-            return key
+        # ドメインがURL内に含まれているか判定
+        for domain in DOMAIN_TYPES[key]:
+            if domain in url:
+                return key
     # どのサイトでもない場合はothersを返す
     return 'others'
 

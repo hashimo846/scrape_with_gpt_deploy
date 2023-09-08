@@ -9,10 +9,6 @@ import parser
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# HTTPリクエスト時のユーザーエージェント
-USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36'
-HEADERS = {'User-Agent': USER_AGENT}
-
 # ScraperAPIのAPIのキー
 SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
 SCRAPER_API_URL = 'http://api.scraperapi.com'
