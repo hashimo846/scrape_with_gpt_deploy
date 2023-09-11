@@ -14,7 +14,7 @@ DOMAIN_TYPES = {
 }
 
 # URLのドメインを判定
-def judge_domain(url:str):
+def judge_domain(url:str) -> str:
     # ドメインがどのサイトであるか判別
     for key in DOMAIN_TYPES.keys():
         # ドメインがURL内に含まれているか判定
@@ -25,7 +25,7 @@ def judge_domain(url:str):
     return 'others'
 
 # 不要な文字を削除してテキストのみ抽出
-def strip_text(text:str = ''):
+def strip_text(text:str = '') -> str:
     # 不要な文字を削除
     text = text.replace('\n', '').replace('\t', '')
     text = text.replace('\r', '').replace('\v', '').replace('\f', '')
@@ -38,15 +38,21 @@ def strip_text(text:str = ''):
     return text
 
 # BeautifulSoupオブジェクトから指定したこのタグからテキストを抽出（タグが見つからない場合はNoneを返す）
-def extract_text(parent:BeautifulSoup, tag:str, id:str = None):
+def extract_text(parent:BeautifulSoup, tag:str, id:str = None) -> str:
     child = parent.find(tag, id=id)
     if child != None:
         return child.text
     else:
         return None
 
+# 指定された要素の中身を削除
+def remove_content(parent:BeautifulSoup, tag:str, id:str = None) -> None:
+    child = parent.find(tag, id=id)
+    if child != None:
+        child.clear()
+
 # URLから全てのテキストを取得
-def parse_text(html_source:str):
+def parse_text(html_source:str) -> str:
     # HTMLソースを解析
     html = BeautifulSoup(html_source, 'html.parser')
     # テキストのみ抽出
@@ -55,7 +61,7 @@ def parse_text(html_source:str):
     text = strip_text(text)
     return text
 
-def parse_amazon(html_source:str):
+def parse_amazon(html_source:str) -> str:
     # 抽出した情報を格納するDict
     extracted_texts = dict()
 
@@ -70,7 +76,13 @@ def parse_amazon(html_source:str):
 
     # 必要な部分からテキストを抽出
     extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
+    overview = centerCol.find('div', id = 'productOverview_feature_div')
+    if overview != None:
+        remove_content(parent = overview, tag = 'div', id = 'poToggleButton')
     extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
+    feature = centerCol.find('div', id = 'featurebullets_feature_div')
+    if feature != None:
+        remove_content(parent = feature, tag = 'a', id = 'seeMoreDetailsLink')
     extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
     #extracted_texts['important'] = extract_text(parent = dp_container, tag = 'div', id = 'importantInformation_feature_div')
     extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')

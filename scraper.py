@@ -33,6 +33,7 @@ def scrape_all(url_list:List[str] = ['']) -> str:
     for url in url_list:
         # ページソースを取得
         source = get_page_source(url)
+        print(source)
         if source == None: continue
         # ドメインによってパーサを切り替えてテキストを取得
         domain = parser.judge_domain(url)
@@ -52,7 +53,8 @@ def scrape_all(url_list:List[str] = ['']) -> str:
 def main():
     # テスト用URL
     # url = 'https://www.amazon.co.jp/dp/B0B4R7PK1F'
-    url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
+    # url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
+    url = 'https://www.amazon.co.jp/dp/B00IRVRZWA?_encoding=UTF8&ref_=cm_sw_r_cp_ud_dp_0SH55RFDQ6C8XWFAV48G_1&th=1'
     text = scrape_all([url])
     print(text)
 
