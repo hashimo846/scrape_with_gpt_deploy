@@ -84,7 +84,6 @@ def parse_amazon(html_source:str) -> str:
     if feature != None:
         remove_content(parent = feature, tag = 'a', id = 'seeMoreDetailsLink')
     extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
-    #extracted_texts['important'] = extract_text(parent = dp_container, tag = 'div', id = 'importantInformation_feature_div')
     extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
     # A+コンテンツのテキストを抽出
     for div in dp_container.find_all('div', recursive = False):
@@ -104,7 +103,6 @@ def parse_amazon(html_source:str) -> str:
         text = strip_text(extracted_texts[key])
         # 関数の出力用のテキスト生成
         output_text += text + '\n'
-    logger.debug(log.format('Amazonから抽出したテキスト', log_text))
     return output_text
 
 def main():
