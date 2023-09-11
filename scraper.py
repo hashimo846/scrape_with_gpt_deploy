@@ -55,7 +55,7 @@ def main():
     # url = 'https://www.amazon.co.jp/dp/B0B4R7PK1F'
     # url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
     # url = 'https://kakaku.com/item/K0001418252/spec/#tab'
-    url = 'https://qiita.com/EbiTT/items/a680a27a651037dad2c9'
+    url = 'https://kakaku.com/item/K0001418252/'
     text = scrape_all([url])
     print(text)
 
