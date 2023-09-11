@@ -8,7 +8,7 @@ logger = log.init(__name__, DEBUG)
 
 # 明示的に特定の処理を行いたいサイトのドメイン一覧
 DOMAIN_TYPES = {
-    'amazon': ['amazon.co.jp', 'amazon.jp', 'amzn.asia'],
+    'amazon': ['amazon.co.jp', 'amazon.jp'],
     'yahoo': ['shopping.yahoo.co.jp', 'store.shopping.yahoo.co.jp'],
     'rakuten': ['www.rakuten.co.jp', 'item.rakuten.co.jp']
 }
