@@ -14,12 +14,12 @@ SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
 SCRAPER_API_URL = 'http://api.scraperapi.com'
 
 # 指定したURLのページソースを取得
-def get_page_source(url:str = None):
+def get_page_source(url:str = None) -> BeautifulSoup:
     logger.info(log.format('URLへアクセス中', url))
     payload = {'api_key': SCRAPER_API_KEY, 'url': url}
     try:
-        with requests.get(SCRAPER_API_URL, params=payload, timeout=(10.0, 20.0)) as r:
-            source = r.text
+        response = requests.get(SCRAPER_API_URL, params=payload, timeout=(10.0, 20.0))
+        source = BeautifulSoup(response.content, 'html.parser', from_encoding=response.encoding)
     except Exception as e:
         logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
         return None
@@ -54,7 +54,8 @@ def main():
     # テスト用URL
     # url = 'https://www.amazon.co.jp/dp/B0B4R7PK1F'
     # url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
-    url = 'https://www.amazon.co.jp/dp/B00IRVRZWA?_encoding=UTF8&ref_=cm_sw_r_cp_ud_dp_0SH55RFDQ6C8XWFAV48G_1&th=1'
+    # url = 'https://kakaku.com/item/K0001418252/spec/#tab'
+    url = 'https://qiita.com/EbiTT/items/a680a27a651037dad2c9'
     text = scrape_all([url])
     print(text)
 

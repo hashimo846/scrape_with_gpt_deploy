@@ -52,22 +52,19 @@ def remove_content(parent:BeautifulSoup, tag:str, id:str = None) -> None:
         child.clear()
 
 # URLから全てのテキストを取得
-def parse_text(html_source:str) -> str:
-    # HTMLソースを解析
-    html = BeautifulSoup(html_source, 'html.parser')
+def parse_text(html_source:BeautifulSoup) -> str:
     # テキストのみ抽出
-    text = html.text
+    text = html_source.text
     # 不要な文字を削除
     text = strip_text(text)
     return text
 
-def parse_amazon(html_source:str) -> str:
+def parse_amazon(html_source:BeautifulSoup) -> str:
     # 抽出した情報を格納するDict
     extracted_texts = dict()
 
     # <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
-    html = BeautifulSoup(html_source, 'html.parser')
-    body = html.find('body')
+    body = html_source.find('body')
     dp = body.find('div', id='dp')
     dp_container = dp.find('div', id='dp-container')
     # <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
