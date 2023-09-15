@@ -14,11 +14,15 @@ logger = log.init(__name__, DEBUG)
 # スプシ上の固定カラム
 COMMON_COLUMNS = {
     'JAN(変更不可)':'jan',
+    '商品ID(変更不可)':'id', 
     'メーカー名(変更不可)':'maker',
     '商品名(変更不可)':'name', 
-    '型番(変更不可)':'model_number', 
     '参照URL(編集可能)':'reference_url', 
-    '実行ボタン':'execute_button'
+    '実行ボタン':'execute_button',
+    '実行ステータス':'execute_status',
+    '取得文':'get_text',
+    '要約文':'summary_text',
+    '抽出結果':'extract_result',
 }
 
 # パラメータ
