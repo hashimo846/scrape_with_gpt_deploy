@@ -29,8 +29,10 @@ def get_page_source(url:str = None) -> BeautifulSoup:
 def scrape_all(url_list:List[str] = ['']) -> str:
     # 各URLから抽出したテキストを格納するリスト
     texts = []
+    # 各URLが読み取りが出来たかのステータスを格納するリスト
+    status = []
     # 各URLからテキストを取得
-    for url in url_list:
+    for idx, url in enumerate(url_list):
         # ページソースを取得
         source = get_page_source(url)
         if source == None: continue
@@ -38,16 +40,20 @@ def scrape_all(url_list:List[str] = ['']) -> str:
         domain = parser.judge_domain(url)
         if domain == 'amazon':
             text = parser.parse_amazon(source)
-        elif domain == 'others':
+        else :
             text = parser.parse_text(source)
         # テキストが取得できなかった場合はスキップ
-        if text != None:
+        if text == None:
+            status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得失敗')
+        else:
+            status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得成功')
             texts.append(text)
+
     # テキストを結合して返す
     if len(texts) == 0:
-        return None
+        return None, '\n'.join(status)
     else:
-        return ''.join(texts)
+        return '\n'.join(texts), '\n'.join(status)
 
 # scraperのテスト
 def main():

@@ -87,9 +87,9 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
 
 # 対象項目の情報を抽出
 def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
-    answers = []
+    raw_answers = []
     for item in items:
         prompt = str_prompt(product_name, item, input_text)
-        answers.append(openai_handler.send(prompt))
-    answers = parse_answers(items, answers)
-    return answers
+        raw_answers.append(openai_handler.send(prompt))
+    answers = parse_answers(items, raw_answers)
+    return answers, ', '.join(raw_answers)
