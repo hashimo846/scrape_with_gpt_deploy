@@ -1,6 +1,6 @@
 from logging import DEBUG, INFO
 import extract_boolean, extract_data, extract_option
-import io_handler, scraper, summarize, log
+import sheet_handler, scraper, summarize, log
 import functions_framework
 
 # ロガーの初期化
@@ -12,12 +12,12 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     logger.debug(log.format('入力情報', 'ターゲット行/列:{}/{}\nスプレッドシートURL:{}'.format(target_row_idx, target_column_idx, sheet_url)))
 
     # マスタ情報を取得
-    master_items = io_handler.get_master_items(sheet_url)
+    master_items = sheet_handler.get_master_items(sheet_url)
     if master_items == None: return 'マスタ情報の取得失敗'
     logger.debug(log.format('マスタ情報', master_items))
 
     # 商品情報を取得
-    product = io_handler.get_product(sheet_url, target_row_idx)
+    product = sheet_handler.get_product(sheet_url, target_row_idx)
     if product == None: return '商品情報の取得失敗'
     logger.debug(log.format('商品情報', product))
 
@@ -42,7 +42,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
 
     # 各回答を出力
-    status = io_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
+    status = sheet_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
     if status == 'error': return 'スプレッドシートへの書き込み失敗'   
     
     # 正常終了
