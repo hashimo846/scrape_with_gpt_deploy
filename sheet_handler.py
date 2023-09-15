@@ -11,240 +11,218 @@ from typing import Dict, List, Tuple
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# スプシ上の固定カラム
-COMMON_COLUMNS = {
+# GCPサービスアカウント認証情報
+GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
+
+# スプレッドシートのインスタンスを保持して扱うクラス
+class Spreadsheet:
+    # ワークシート名
+    MASTER_WORKSHEET_NAME = '項目_詳細情報'
+    PRODUCT_WORKSHHET_NAME = '商品_詳細情報'
+    # スプシ上の固定カラム
+    INPUT_COLUMNS_KEY = {
     'JAN(変更不可)':'jan',
     '商品ID(変更不可)':'id', 
     'メーカー名(変更不可)':'maker',
     '商品名(変更不可)':'name', 
     '参照URL(編集可能)':'reference_url', 
+    }
+    FEEDBACK_COLUMNS_KEY = {
     '実行ボタン':'execute_button',
     '実行ステータス':'execute_status',
     '取得文':'get_text',
     '要約文':'summary_text',
     '抽出結果':'extract_result',
-}
-
-# パラメータ
-GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
-MASTER_WORKSHEET = '項目_詳細情報'
-PRODUCT_WORKSHHET = '商品_詳細情報'
-
-# Jsonファイルの読み込み
-def read_json(file_path:str) -> Dict:
-    with open(file_path, 'r') as f:
-        return json.load(f)
-
-# Google APIの認証
-def authorize_gspread(credential_path:str = GOOGLE_CREDENTIAL_PATH) -> gspread.Client:
-    credentials =  service_account.Credentials.from_service_account_file(
-        credential_path, 
-        scopes = [
-            'https://www.googleapis.com/auth/spreadsheets',
-            'https://www.googleapis.com/auth/drive',
-        ]
-    )
-    gspread_client = gspread.authorize(credentials)
-    return gspread_client
-
-# URLからスプレッドシートを取得
-def get_spreadsheet(sheet_url:str) -> gspread.Spreadsheet:
-    gspread_client = authorize_gspread()
-    spreadsheet = gspread_client.open_by_url(sheet_url)
-    return spreadsheet
-
-# URLとシート名からテーブルを取得（List）
-def get_table(sheet_url:str, worksheet_name:str) -> List:
-    while True:
-        try:
-            spreadsheet = get_spreadsheet(sheet_url)
-            worksheet = spreadsheet.worksheet(worksheet_name)
-            table = worksheet.get_all_values()
-        except google.auth.exceptions.TransportError as e:
-            logger.error(log.format('スプレッドシート取得失敗', e))
-            sleep(1)
-            logger.info(log.format('スプレッドシート再取得中'))
-            continue
-        else:
-            break
-    return table
-
-# 指定した列の全データをテーブルから取得
-def get_column(table:List, idx:int) -> List:
-    return [row[idx] for row in table]
-
-# スプレッドシートのURLからマスタ情報を取得
-def get_master(sheet_url:str) -> Dict:
-    # get master table
-    logger.info(log.format('スプレッドシートからマスタ情報取得中'))
-    master_table = get_table(sheet_url, MASTER_WORKSHEET)
-    # get each column
-    master = {
-        'features': get_column(master_table, 0),
-        'descriptions': get_column(master_table, 1),
-        'formats': get_column(master_table, 2),
-        'units': get_column(master_table, 3),
-        'filters': get_column(master_table, 4),
     }
-    return master
+    # クラス内で保持する変数
+    spreadsheet = None
+    master_worksheet = None
+    master_table = []
+    product_worksheet = None
+    product_table = []
+
+    # コンストラクタ（スプシURL必須）
+    def __init__(self, sheet_url:str) -> None:
+        while True:
+            try:
+                # Google APIの認証
+                gspread_client = self.__authorize_gspread()
+                # スプレッドシート取得
+                self.spreadsheet = gspread_client.open_by_url(sheet_url)
+                # ワークシート取得
+                self.master_worksheet = self.spreadsheet.worksheet(self.MASTER_WORKSHEET_NAME)
+                self.product_worksheet = self.spreadsheet.worksheet(self.PRODUCT_WORKSHHET_NAME)
+                # テーブル取得
+                self.master_table = self.master_worksheet.get_all_values()
+                self.product_table = self.product_worksheet.get_all_values()
+            except Exception as e:
+                logger.error(log.format('スプレッドシート取得失敗', e))
+                sleep(1)
+                logger.info(log.format('スプレッドシート再取得中'))
+                continue
+            else:
+                break
     
-
-# マスタ情報から二値項目を取得
-def get_boolean_items(master:Dict) -> List:
-    items, i = [], 0
-    while i < len(master['formats']):
-        if master['formats'][i] == '二値':
-            items.append({'name':master['features'][i]})
-        i += 1
-    return items
-
-# マスタ情報からデータ項目を取得
-def get_data_items(master:Dict) -> List:
-    items, i = [], 0
-    while i < len(master['formats']):
-        if master['formats'][i] in ['小数','整数','フリーワード']:
-            name = master['features'][i]
-            value_type = master['formats'][i]
-            unit = master['units'][i] if master['units'][i] != '' else None
-            items.append({'name':name, 'value_type':value_type, 'unit':unit})
-        i += 1
-    return items
-
-# マスタ情報から選択項目を取得
-def get_option_items(master:Dict) -> List:
-    items, i = [], 0
-    while i < len(master['formats']):
-        if master['formats'][i] == '管理用の値':
-            name = master['features'][i]
-            options = [master['filters'][i]]
-            i += 1
-            while i < len(master['formats']) and master['features'][i] == '':
-                options.append(master['filters'][i])
-                i += 1
-            items.append({'name':name, 'options':options})
-        else:
-            i += 1
-    return items
-
-# スプレッドシートからマスタ情報の全項目を取得
-def get_master_items(sheet_url:str) -> Dict:
-    try:
-        # get master data from spreadsheet
-        master = get_master(sheet_url)
-        # get each items
-        boolean_items = get_boolean_items(master)
-        data_items = get_data_items(master)
-        option_items = get_option_items(master)
-        # to dict
-        master_items = {
-            'boolean':boolean_items, 
-            'data':data_items,
-            'option':option_items,
-        }
-        return master_items
-    except Exception as e:
-        logger.error(log.format('マスタ情報取得失敗', e))
-        return None
-
-# extract valid columns from product table
-def extract_valid_columns(target_row:List) -> Dict:
-    # TOOD: 型番から商品IDに変更, 実行ステータスを追加
-    important_keys = COMMON_COLUMNS
-    valid_columns = {}
-    for idx, value in enumerate(target_row):
-        if value in important_keys:
-            key = important_keys[value]
-        elif value == '':
-            continue
-        else:
-            key = (value)
-        # valid_columns = {key:idx}
-        valid_columns[key] = idx
-    return valid_columns
-
-def get_product_table(sheet_url:str) -> List:
-    logger.info(log.format('スプレッドシートから商品情報取得中'))
-    product_table = get_table(sheet_url, PRODUCT_WORKSHHET)
-    return product_table
-
-# 商品情報を取得（janが空の場合はNoneを返す）
-def get_product(sheet_url:str, target_row_idx:int) -> Dict:
-    try:
-        product_table = get_product_table(sheet_url)
-        valid_columns = extract_valid_columns(product_table[0])
-        target_row = product_table[target_row_idx]
-        product = dict()
-        for key in valid_columns.keys():
-            product[key] = target_row[valid_columns[key]]
-        if product['jan'] == '':
+    # スプレッドシートからマスタ情報の全項目を取得
+    def get_master_items(self) -> Dict:
+        try:
+            # get master data from spreadsheet
+            master = self.__get_master()
+            # get each items
+            boolean_items = self.__get_boolean_items(master)
+            data_items = self.__get_data_items(master)
+            option_items = self.__get_option_items(master)
+            # to dict
+            master_items = {
+                'boolean':boolean_items, 
+                'data':data_items,
+                'option':option_items,
+            }
+            return master_items
+        except Exception as e:
+            logger.error(log.format('マスタ情報取得失敗', e))
             return None
-        else:
-            return product
-    except Exception as e:
-        logger.error(log.format('商品情報取得失敗', e))
-        return None
 
-# get all products from product sheet
-def get_all_products() -> List:
-    # read input from json
-    input_data = read_json(INPUT_PATH)
+    # スプシの入力部分を取得（JANから参照URLまでのカラム）
+    def get_inputs(self, target_row_idx:int, target_column_idx:int) -> Dict:
+        try:
+            # 各カラムのインデックスを特定
+            input_header = self.product_table[0][:target_column_idx]
+            input_columns_idx = dict()
+            for idx, value in enumerate(input_header):
+                if value in self.INPUT_COLUMNS_KEY.keys():
+                    input_columns_idx[self.INPUT_COLUMNS_KEY[value]] = idx
+            # 対象の行から情報を取得
+            target_range = self.product_table[target_row_idx][:target_column_idx]
+            inputs = dict()
+            for key in input_columns_idx.keys():
+                inputs[key] = target_range[input_columns_idx[key]]
+            if inputs['jan'] == '':
+                return None
+            else:
+                return inputs
+        except Exception as e:
+            logger.error(log.format('商品情報取得失敗', e))
+            return None
+
+    # スプシの出力部分を取得（実行ボタンから最後の抽出項目までのカラム）
+    def get_outputs(self, target_row_idx:int, target_column_idx:int) -> Dict:
+        # 各カラムのインデックスを特定
+        output_header = self.product_table[0][target_column_idx:]
+        output_columns_idx = dict()
+        for idx, value in enumerate(output_header):
+            if value in self.FEEDBACK_COLUMNS_KEY.keys():
+                output_columns_idx[self.FEEDBACK_COLUMNS_KEY[value]] = idx
+            else:
+                output_columns_idx[value] = idx
+        # 対象の行から情報を取得
+        target_range = self.product_table[target_row_idx][target_column_idx:]
+        outputs = dict()
+        for key in output_columns_idx.keys():
+            outputs[key] = target_range[output_columns_idx[key]]
+        return outputs
     
-    # extract valid columns
-    valid_columns = extract_valid_columns(product_table[0])
-    # get products list
-    products = []
-    for target_row in product_table[1:]:
-        product = extract_product(valid_columns, target_row)
-        if product is not None:
-            products.append(product)
-    return products, valid_columns
+    # スプシの出力部分を書き換え（実行ボタンから最後の抽出項目までのカラム）
+    def set_outputs(self, target_row_idx:int, target_column_idx:int, outputs:Dict) -> None:
+        # 各カラムのインデックスを特定
+        output_header = self.product_table[0][target_column_idx:]
+        output_columns_idx = dict()
+        for idx, value in enumerate(output_header):
+            if value in self.FEEDBACK_COLUMNS_KEY.keys():
+                output_columns_idx[self.FEEDBACK_COLUMNS_KEY[value]] = idx
+            else:
+                output_columns_idx[value] = idx
+        # 対象の行に情報を書き込み
+        target_range = self.product_table[target_row_idx][target_column_idx:]
+        for key in outputs.keys():
+            if key in output_columns_idx.keys():
+                target_range[output_columns_idx[key]] = str(outputs[key])
+        start_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+1)
+        end_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+len(target_range))
+        self.product_worksheet.update('{}:{}'.format(start_cell, end_cell), [target_range], value_input_option='USER_ENTERED')
+        '''spreadのバージョン6になると、引数の順番が逆になる
+        UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
+        '''
 
-# set values
-def set_answers(sheet_url:str, target_row_idx:int, target_column_idx:int, values:List[str]) -> None:
-    spreadsheet = get_spreadsheet(sheet_url)
-    worksheet = spreadsheet.worksheet(PRODUCT_WORKSHHET)
-    values_size = len(values[0])
-    start_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+1)
-    end_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+values_size)
-    worksheet.update('{}:{}'.format(start_cell, end_cell), values)
-    '''spreadのバージョン6になると、引数の順番が逆になる
-    UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
-    '''
+    # マスター情報を取得
+    def __get_master(self) -> Dict:
+        # get master table
+        logger.info(log.format('スプレッドシートからマスタ情報取得中'))
+        # get each column
+        master = {
+            'features':self. __get_column(self.master_table, 0),
+            'descriptions': self.__get_column(self.master_table, 1),
+            'formats': self.__get_column(self.master_table, 2),
+            'units': self.__get_column(self.master_table, 3),
+            'filters': self.__get_column(self.master_table, 4),
+        }
+        return master
+    
+    # 指定した列の全データをテーブルから取得
+    def __get_column(self, table:List, idx:int) -> List:
+        return [row[idx] for row in table]
 
-# 出力先のカラムのヘッダとインデックスを取得
-def get_output_columns(sheet_url:str, target_column_idx:int) -> Dict:
-    table = get_product_table(sheet_url)
-    output_header = table[0][target_column_idx:]
-    output_columns = dict()
-    for i in range(len(output_header)):
-        output_columns[output_header[i]] = i
-    return output_columns, len(output_header)
+    # マスタ情報から二値項目を取得
+    def __get_boolean_items(self, master:Dict) -> List:
+        items, i = [], 0
+        while i < len(master['formats']):
+            if master['formats'][i] == '二値':
+                items.append({'name':master['features'][i]})
+            i += 1
+        return items
 
-def output_answers(sheet_url:str, target_row_idx:int, target_column_idx:int, answers:Dict) -> None :
-    output_columns, output_size = get_output_columns(sheet_url, target_column_idx)
-    # make output data
-    outputs = ['' for i in range(output_size)]
-    # for data items
-    for key in answers['data'].keys():
-        outputs[output_columns[key]] = str(answers['data'][key])
-    # for boolean items
-    for key in answers['boolean'].keys():
-        outputs[output_columns[key]] = str(answers['boolean'][key])
-    # for option items
-    for key in answers['option'].keys():
-        outputs[output_columns[key]] = ', '.join(answers['option'][key])
-    # set values
-    try:
-        set_answers(sheet_url, target_row_idx, target_column_idx, [outputs])
-    except:
-        logger.error(log.format('スプレッドシートへの書き出し失敗'))
-        return 'error'
-    else:
-        logger.info(log.format('スプレッドシートへの書き出し完了'))
-        return 'ok'
+    # マスタ情報からデータ項目を取得
+    def __get_data_items(self, master:Dict) -> List:
+        items, i = [], 0
+        while i < len(master['formats']):
+            if master['formats'][i] in ['小数','整数','フリーワード']:
+                name = master['features'][i]
+                value_type = master['formats'][i]
+                unit = master['units'][i] if master['units'][i] != '' else None
+                items.append({'name':name, 'value_type':value_type, 'unit':unit})
+            i += 1
+        return items
 
+    # マスタ情報から選択項目を取得
+    def __get_option_items(self, master:Dict) -> List:
+        items, i = [], 0
+        while i < len(master['formats']):
+            if master['formats'][i] == '管理用の値':
+                name = master['features'][i]
+                options = [master['filters'][i]]
+                i += 1
+                while i < len(master['formats']) and master['features'][i] == '':
+                    options.append(master['filters'][i])
+                    i += 1
+                items.append({'name':name, 'options':options})
+            else:
+                i += 1
+        return items
+    
+
+    # Google APIの認証
+    def __authorize_gspread(self, credential_path:str = GOOGLE_CREDENTIAL_PATH) -> gspread.Client:
+        credentials =  service_account.Credentials.from_service_account_file(
+            credential_path, 
+            scopes = [
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive',
+            ]
+        )
+        gspread_client = gspread.authorize(credentials)
+        return gspread_client
+
+# ローカル実行時のプロセス
 def main():
-    pass
-
+    sheet_url = 'https://docs.google.com/spreadsheets/d/10Y1f2RzKXiSl-PXa-MEhPPxdm2cdPELVwfJ7miIxuzU/edit?usp=sharing'
+    spreadsheet = Spreadsheet(sheet_url)
+    logger.debug(log.format('入力', spreadsheet.get_inputs(2, 5)))
+    logger.debug(log.format('マスター', spreadsheet.get_master_items()))
+    output = spreadsheet.get_outputs(2, 5)
+    logger.debug(log.format('出力部分', output))
+    output['execute_status'] = 'ok'    
+    output['execute_button'] = 'TRUE'
+    spreadsheet.set_outputs(2, 5, output)
+    
 if __name__ == '__main__':
     main()

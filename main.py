@@ -10,14 +10,15 @@ logger = log.init(__name__, DEBUG)
 def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> str:
     # 入力情報をログ出力
     logger.debug(log.format('入力情報', 'ターゲット行/列:{}/{}\nスプレッドシートURL:{}'.format(target_row_idx, target_column_idx, sheet_url)))
-
+    # スプシを取得
+    spreadsheet = sheet_handler.Spreadsheet(sheet_url)
     # マスタ情報を取得
-    master_items = sheet_handler.get_master_items(sheet_url)
+    master_items = spreadsheet.get_master_items()
     if master_items == None: return 'マスタ情報の取得失敗'
     logger.debug(log.format('マスタ情報', master_items))
 
     # 商品情報を取得
-    product = sheet_handler.get_product(sheet_url, target_row_idx)
+    product = spreadsheet.get_inputs(target_row_idx, target_column_idx)
     if product == None: return '商品情報の取得失敗'
     logger.debug(log.format('商品情報', product))
 
@@ -40,33 +41,33 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> st
     logger.debug(log.format('Boolean項目の抽出結果', answers['boolean']))
     answers['option'] = extract_option.extract(input_text = summarize_text, product_name = product['name'], items = master_items['option'])
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
-
+    outputs = answers['data'] | answers['boolean'] | answers['option']
     # 各回答を出力
-    status = sheet_handler.output_answers(sheet_url, target_row_idx, target_column_idx, answers)
-    if status == 'error': return 'スプレッドシートへの書き込み失敗'   
-    
+    status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
+    if status == 'error': return 'スプレッドシートへの書き込み失敗' 
+
     # 正常終了
     return '実行終了'
 
 # HTTPリクエスト時のプロセス
 @functions_framework.http
-def on_http_trigger(request) -> str:
+def on_http_trigger(request) -> None:
     # 入力を取得
     request_json = request.get_json()
     sheet_url = request_json['sheet_url']
-    target_row_idx = int(request_json['row'])
-    target_column_idx = int(request_json['column'])
+    target_row_idx = int(request_json['target_row_idx'])
+    target_column_idx = int(request_json['target_column_idx'])
 
     # メインプロセスを実行
-    status = main_process(sheet_url, target_row_idx, target_column_idx)
-    return status
+    main_process(sheet_url, target_row_idx, target_column_idx)
+    return
 
 # ローカル実行時のプロセス
 def main() -> None:
     # 入力を取得
-    sheet_url = 'https://docs.google.com/spreadsheets/d/1muIHw9Rolcjsi4KUW5XE45B0T3-5frBe1ZJK93LN9ZY/edit?usp=sharing'
+    sheet_url = 'https://docs.google.com/spreadsheets/d/10Y1f2RzKXiSl-PXa-MEhPPxdm2cdPELVwfJ7miIxuzU/edit?usp=sharing'
     target_row_idx = 2
-    target_column_idx = 7
+    target_column_idx = 5
 
     # メインプロセスを実行
     status = main_process(sheet_url, target_row_idx, target_column_idx)

@@ -69,12 +69,12 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
             continue
         # 有効な項目名のみ抽出
         if key_list[0] in item_names:
-            answers_dict[key_list[0]] = []
+            valid_answers = []
             # 有効な選択肢のみ抽出
             try:
                 for option in json_dict[key_list[0]]:
                     if option in items[i]['options']:
-                        answers_dict[key_list[0]].append(option)
+                        valid_answers.append(option)
                     elif option == '':
                         continue
                     else:
@@ -82,6 +82,7 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
             except Exception as e:
                 logger.warning(log.format('項目が抽出できませんでした', e))
                 continue
+            answers_dict[key_list[0]] = ', '.join(valid_answers)
     return answers_dict
 
 # 対象項目の情報を抽出
