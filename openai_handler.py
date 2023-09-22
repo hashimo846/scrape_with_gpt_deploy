@@ -32,3 +32,18 @@ def send(prompt:str, messages:List = None) -> str:
         else:
             break
     return response.choices[0]['message']['content'].strip()
+
+# メッセージ群を送信して回答を取得
+def send_messages(messages:List) -> str:
+    # send prompt
+    while True:
+        try:
+            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0)
+        except Exception as e:
+            logger.error(log.format('プロンプト送信失敗', e))
+            sleep(1)
+            logger.info(log.format('プロンプト再送信中'))
+            continue
+        else:
+            break
+    return response.choices[0]['message']['content'].strip()
