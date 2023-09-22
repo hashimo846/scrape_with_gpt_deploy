@@ -15,7 +15,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
     # スプシ出力用の辞書
     outputs = {
         'execute_button':'FALSE',
-        'execute_status':'' ,
+        'execute_status':'',
         'get_text':'',
         'summary_text':'',
         'extract_result':'',

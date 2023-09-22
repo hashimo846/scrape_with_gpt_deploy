@@ -20,7 +20,8 @@ def get_page_source(url:str = None, country_code = 'jp', premium = 'true') -> Be
     payload = {'api_key': SCRAPER_API_KEY, 'url': url, 'country_code': country_code, 'premium': premium}
     try:
         response = requests.get(SCRAPER_API_URL, params=urlencode(payload), timeout=(10.0, 20.0))
-        source = BeautifulSoup(response.content, 'html.parser')
+        response.encoding = 'utf-8'
+        source = BeautifulSoup(response.text, 'html.parser')
     except Exception as e:
         logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
         return None
