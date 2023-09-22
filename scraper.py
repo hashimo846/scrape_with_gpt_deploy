@@ -5,6 +5,7 @@ import log
 from typing import List, Dict
 import os
 import parser
+from urllib.parse import urlencode
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
@@ -13,13 +14,13 @@ logger = log.init(__name__, DEBUG)
 SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
 SCRAPER_API_URL = 'http://api.scraperapi.com'
 
-# 指定したURLのページソースを取得
-def get_page_source(url:str = None) -> BeautifulSoup:
+# 指定したURLのページソースを取得 (premiumオプションはスクレイピング対策回避のため)
+def get_page_source(url:str = None, country_code = 'jp', premium = 'true') -> BeautifulSoup:
     logger.info(log.format('URLへアクセス中', url))
-    payload = {'api_key': SCRAPER_API_KEY, 'url': url}
+    payload = {'api_key': SCRAPER_API_KEY, 'url': url, 'country_code': country_code, 'premium': premium}
     try:
-        response = requests.get(SCRAPER_API_URL, params=payload, timeout=(10.0, 20.0))
-        source = BeautifulSoup(response.content, 'html.parser', from_encoding=response.encoding)
+        response = requests.get(SCRAPER_API_URL, params=urlencode(payload), timeout=(10.0, 20.0))
+        source = BeautifulSoup(response.content, 'html.parser')
     except Exception as e:
         logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
         return None
@@ -59,9 +60,8 @@ def scrape_all(url_list:List[str] = ['']) -> str:
 def main():
     # テスト用URL
     # url = 'https://www.amazon.co.jp/dp/B0B4R7PK1F'
-    # url = 'https://www.amazon.co.jp/dp/B08BP6894V?th=1'
-    # url = 'https://kakaku.com/item/K0001418252/spec/#tab'
-    url = 'https://kakaku.com/item/K0001418252/'
+    url = 'https://amzn.asia/d/iU4Y9Ys'
+    # url = 'https://kakaku.com/item/K0001292315/spec/#tab'
     text = scrape_all([url])
     print(text)
 
