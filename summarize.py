@@ -67,10 +67,31 @@ def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict) -
     for key in master_items.keys():
         for item in master_items[key]:
             item_names.append(item['name'])
+    system_message = 'You will be provided with key words and a quote obtained from web pages. '
+    system_message += 'Your task is to extract information about the product ' + product['name'] + ' from only the provided quote. '
+    system_message += 'In addition, you must answer in Japanese and include as much information as possible related to the provided key words if they are mentioned in the quote.'
+    user_message = 'Quote: ' + input_text + '\n\nKey words: ' + ', '.join(item_names)
     messages = [
-        {'role':'system', 'content':'You will be provided with key words and a quote from web pages. Your job is to extract information about the product ' + product['name'] +' from the given quote. In addition, you must include as much information as possible about the key words provided if they are mentioned in the quote.'},
-        {'role':'user', 'content':'Quote: ' + input_text + '\n\nKey words: ' + ', '.join(item_names)}
+        {'role':'system', 'content':system_message},
+        {'role':'user', 'content':user_message},
     ]
+    return messages
+
+# refine用のメッセージ群を返す
+def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict) -> List:
+    item_names = []
+    for key in master_items.keys():
+        for item in master_items[key]:
+            item_names.append(item['name'])
+    system_message = 'You will be provided with key words, a existing excerpt and a quote obtained from web pages. '
+    system_message = 'Your task is to add information to the excerpt from only the quote and to produce a final excerpt about the product ' + product['name'] + '. '
+    system_message += 'In addition, you must answer in Japanese and include as much information as possible related to the provided key words if they are mentioned in the provided existing excerpt and quote.'
+    user_message = 'Key words: ' + ', '.join(item_names) + '\n\nExisting excerpt: ' + existing_answer + '\n\nQuote: ' + input_txte
+    messages = [
+        {'role':'system', 'content':system_message},
+        {'role':'user', 'content':user_message}
+    ]
+    return messages
 
 # refine用のプロンプトの文字列を返す
 def str_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict) -> str:
@@ -124,11 +145,12 @@ def refine(input_text:str, product:Dict, master_items:Dict) -> str:
     # 初めの分割の要約
     # prompt = str_summarize_prompt(split_texts[0], product, master_items)
     # answer_text = openai_handler.send(prompt)
+    # logger.debug(log.format('初回要約プロンプト', prompt))
 
+    # 初めの分割の要約
     messages = messages_summarize_prompt(split_texts[0], product, master_items)
-    answer_text = openai_handler.send(prompt)
-    
-    logger.debug(log.format('初回要約プロンプト', prompt))
+    answer_text = openai_handler.send_messages(messages)
+    logger.debug(log.format('初回要約プロンプト', messages))
 
     # 二個目以降の分割の要約
     for split_text in split_texts[1:]:
