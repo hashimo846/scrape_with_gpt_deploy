@@ -101,7 +101,7 @@ def on_http_trigger(request) -> None:
 def main() -> None:
     # 入力を取得
     sheet_url = 'https://docs.google.com/spreadsheets/d/1HbqxxHNUf40X71qrpCDByNdhrcuYJujsAde-cImwFLc/edit?usp=sharing'
-    target_row_idx = 2
+    target_row_idx = 6
     target_column_idx = 5
 
     # メインプロセスを実行

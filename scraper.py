@@ -15,16 +15,27 @@ SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
 SCRAPER_API_URL = 'http://api.scraperapi.com'
 
 # 指定したURLのページソースを取得 (premiumオプションはスクレイピング対策回避のため)
-def get_page_source(url:str = None, country_code = 'jp', premium = 'true') -> BeautifulSoup:
+def get_page_source(url:str = None, country_code = 'jp', premium = 'true', retry_max = 3) -> BeautifulSoup:
     logger.info(log.format('URLへアクセス中', url))
     payload = {'api_key': SCRAPER_API_KEY, 'url': url, 'country_code': country_code, 'premium': premium}
-    try:
-        response = requests.get(SCRAPER_API_URL, params=urlencode(payload), timeout=(10.0, 20.0))
-        response.encoding = 'utf-8'
-        source = BeautifulSoup(response.text, 'html.parser')
-    except Exception as e:
-        logger.error(log.format('アクセス失敗','URL:{}\nerror message:{}'.format(url, e)))
-        return None
+    retry_count = 0
+    while True:
+        try:
+            response = requests.get(SCRAPER_API_URL, params=urlencode(payload), timeout=(10.0, 15.0))
+            response.encoding = 'utf-8'
+            source = BeautifulSoup(response.text, 'html.parser')
+            break
+        except Exception as e:
+            logger.error(log.format('アクセス失敗','URL:{}\ERROR MESSAGE:{}'.format(url, e)))
+            # リトライ回数の上限に達したらNoneを返して終了
+            if retry_count >= retry_max:
+                logger.error(log.format('アクセス失敗','URL:{}\nERROR MESSAGE:{}'.format(url, e)))
+                return None
+            # リトライ
+            else:
+                retry_count += 1
+                continue
+    logger.info(log.format('アクセス成功', 'URL:{}\nRETRY:{}'.format(url, retry_count)))
     return source
 
 # 各URLのテキストを取得して結合
