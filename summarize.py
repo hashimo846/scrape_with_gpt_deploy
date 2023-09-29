@@ -147,11 +147,6 @@ def refine(input_text:str, product:Dict, master_items:Dict) -> str:
         additional_split += split_by_token(split, max_token = 1000)
 
     # 初めの分割の要約
-    # prompt = str_summarize_prompt(split_texts[0], product, master_items)
-    # answer_text = openai_handler.send(prompt)
-    # logger.debug(log.format('初回要約プロンプト', prompt))
-
-    # 初めの分割の要約
     messages = messages_summarize_prompt(first_split, product, master_items)
     answer_text = openai_handler.send_messages(messages)
     logger.debug(log.format('初回要約プロンプト', messages))
