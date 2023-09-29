@@ -99,9 +99,9 @@ def on_http_trigger(request) -> None:
 
 # ローカル実行時のプロセス
 def main() -> None:
-    for target_row_idx in range(2, 3):
+    for target_row_idx in range(8, 9):
         # 入力を取得
-        sheet_url = 'https://docs.google.com/spreadsheets/d/1HbqxxHNUf40X71qrpCDByNdhrcuYJujsAde-cImwFLc/edit?usp=sharing'
+        sheet_url = 'https://docs.google.com/spreadsheets/d/1e8Nyp0poD-mSNEocrXhCm76EnLuC_1-lWJCpCkor6Ho/edit?usp=sharing'
         # target_row_idx = 2
         target_column_idx = 5
         # メインプロセスを実行

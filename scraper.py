@@ -21,7 +21,7 @@ def get_page_source(url:str = None, country_code = 'jp', premium = 'true', retry
     retry_count = 0
     while True:
         try:
-            response = requests.get(SCRAPER_API_URL, params=urlencode(payload), timeout=(10.0, 15.0))
+            response = requests.get(SCRAPER_API_URL, params=payload, timeout=(10.0, 15.0))
             response.encoding = 'utf-8'
             source = BeautifulSoup(response.text, 'html.parser')
             break
