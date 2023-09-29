@@ -41,7 +41,7 @@ def send_messages(messages:List) -> str:
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
-            logger.info(log.format('プロンプト再送信中', 'SEND_PROMPT: {}'.format(messages)))
+            logger.info(log.format('プロンプト再送信'))
             continue
         else:
             break
