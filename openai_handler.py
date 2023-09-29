@@ -45,5 +45,5 @@ def send_messages(messages:List) -> str:
             continue
         else:
             break
-    logger.info(log.format('返答受信', 'RECEIVE_RESPONSE: {}'.format(response.usage)))
+    logger.info(log.format('レスポンス内容', 'RECEIVE_RESPONSE: {}'.format(response.usage)))
     return response.choices[0]['message']['content'].strip()
