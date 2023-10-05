@@ -15,7 +15,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
     # スプシ出力用の辞書
     outputs = {
         'execute_button':'FALSE',
-        'execute_status':'' ,
+        'execute_status':'',
         'get_text':'',
         'summary_text':'',
         'extract_result':'',
@@ -99,13 +99,13 @@ def on_http_trigger(request) -> None:
 
 # ローカル実行時のプロセス
 def main() -> None:
-    # 入力を取得
-    sheet_url = 'https://docs.google.com/spreadsheets/d/10Y1f2RzKXiSl-PXa-MEhPPxdm2cdPELVwfJ7miIxuzU/edit?usp=sharing'
-    target_row_idx = 2
-    target_column_idx = 5
-
-    # メインプロセスを実行
-    main_process(sheet_url, target_row_idx, target_column_idx)
+    for target_row_idx in range(8, 9):
+        # 入力を取得
+        sheet_url = 'https://docs.google.com/spreadsheets/d/1e8Nyp0poD-mSNEocrXhCm76EnLuC_1-lWJCpCkor6Ho/edit?usp=sharing'
+        # target_row_idx = 2
+        target_column_idx = 5
+        # メインプロセスを実行
+        main_process(sheet_url, target_row_idx, target_column_idx)
     return
 
 if __name__ == "__main__":

@@ -53,54 +53,62 @@ def remove_content(parent:BeautifulSoup, tag:str, id:str = None) -> None:
 
 # URLから全てのテキストを取得
 def parse_text(html_source:BeautifulSoup) -> str:
-    # テキストのみ抽出
-    text = html_source.text
-    # 不要な文字を削除
-    text = strip_text(text)
-    return text
+    try:
+        # テキストのみ抽出
+        text = html_source.text
+        # 不要な文字を削除
+        text = strip_text(text)
+        return text
+    except Exception as e:
+        logger.error(log.format('Webページの解析失敗', e))
+        return None
 
 def parse_amazon(html_source:BeautifulSoup) -> str:
-    # 抽出した情報を格納するDict
-    extracted_texts = dict()
+    try:
+        # 抽出した情報を格納するDict
+        extracted_texts = dict()
 
-    # <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
-    body = html_source.find('body')
-    dp = body.find('div', id='dp')
-    dp_container = dp.find('div', id='dp-container')
-    # <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
-    ppd = dp_container.find('div', id='ppd')
-    centerCol = ppd.find('div', id='centerCol')
+        # <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
+        body = html_source.find('body')
+        dp = body.find('div', id='dp')
+        dp_container = dp.find('div', id='dp-container')
+        # <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
+        ppd = dp_container.find('div', id='ppd')
+        centerCol = ppd.find('div', id='centerCol')
 
-    # 必要な部分からテキストを抽出
-    extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
-    overview = centerCol.find('div', id = 'productOverview_feature_div')
-    if overview != None:
-        remove_content(parent = overview, tag = 'div', id = 'poToggleButton')
-    extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
-    feature = centerCol.find('div', id = 'featurebullets_feature_div')
-    if feature != None:
-        remove_content(parent = feature, tag = 'a', id = 'seeMoreDetailsLink')
-    extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
-    extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
-    # A+コンテンツのテキストを抽出
-    for div in dp_container.find_all('div', recursive = False):
-        if 'aplus' in div.get('id'):
-            extracted_texts[div.get('id')] = extract_text(parent = dp_container, tag = 'div', id = div.get('id'))
-        
-    # 抽出したテキストを結合
-    log_text = output_text = ''
-    for key in extracted_texts.keys():
-        # ログ出力用のテキスト生成
-        log_text += '--- {} ---\n'.format(key)
-        log_text += strip_text(str(extracted_texts[key])) + '\n'
-        # 抽出したテキストがNoneの場合はスキップ
-        if extracted_texts[key] == None:
-            continue
-        # 不要な文字を削除
-        text = strip_text(extracted_texts[key])
-        # 関数の出力用のテキスト生成
-        output_text += text + '\n'
-    return output_text
+        # 必要な部分からテキストを抽出
+        extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
+        overview = centerCol.find('div', id = 'productOverview_feature_div')
+        if overview != None:
+            remove_content(parent = overview, tag = 'div', id = 'poToggleButton')
+        extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
+        feature = centerCol.find('div', id = 'featurebullets_feature_div')
+        if feature != None:
+            remove_content(parent = feature, tag = 'a', id = 'seeMoreDetailsLink')
+        extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
+        extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
+        # A+コンテンツのテキストを抽出
+        for div in dp_container.find_all('div', recursive = False):
+            if 'aplus' in div.get('id'):
+                extracted_texts[div.get('id')] = extract_text(parent = dp_container, tag = 'div', id = div.get('id'))
+            
+        # 抽出したテキストを結合
+        log_text = output_text = ''
+        for key in extracted_texts.keys():
+            # ログ出力用のテキスト生成
+            log_text += '--- {} ---\n'.format(key)
+            log_text += strip_text(str(extracted_texts[key])) + '\n'
+            # 抽出したテキストがNoneの場合はスキップ
+            if extracted_texts[key] == None:
+                continue
+            # 不要な文字を削除
+            text = strip_text(extracted_texts[key])
+            # 関数の出力用のテキスト生成
+            output_text += text + '\n'
+        return output_text
+    except Exception as e:
+        logger.error(log.format('Amazonのページ解析失敗', e))
+        return None
 
 def main():
     pass
