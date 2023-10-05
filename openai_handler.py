@@ -21,7 +21,7 @@ def send(prompt:str) -> str:
     # send prompt
     while True:
         try:
-            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60, temperature = 0)
+            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60, temperature = 0, max_tokens = 1500)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
@@ -37,7 +37,7 @@ def send_messages(messages:List) -> str:
     while True:
         try:
             logger.info(log.format('プロンプト送信中', 'SEND_PROMPT: {}'.format(messages)))
-            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0)
+            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = 1500)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
