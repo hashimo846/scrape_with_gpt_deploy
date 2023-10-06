@@ -46,11 +46,15 @@ def scrape_all(url_list:List[str] = ['']) -> str:
     status = []
     # 各URLからテキストを取得
     for idx, url in enumerate(url_list):
+        # ドメインによってURLのタイプを判定
+        domain = parser.judge_domain(url)
+        # ドメインによってURLにオプションを付与
+        if domain == 'amazon':
+            url += '&language=ja_JP'
         # ページソースを取得
         source = get_page_source(url)
         if source == None: continue
         # ドメインによってパーサを切り替えてテキストを取得
-        domain = parser.judge_domain(url)
         if domain == 'amazon':
             text = parser.parse_amazon(source)
         else :
