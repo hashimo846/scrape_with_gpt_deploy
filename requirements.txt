@@ -6,6 +6,4 @@ tiktoken
 google-auth
 gspread
 functions_framework
-google-cloud-error-reporting==0.30.0
-selenium==3.141.0
 setuptools
