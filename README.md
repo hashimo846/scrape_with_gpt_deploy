@@ -4,10 +4,11 @@
 # GCFへのデプロイ方法
 1. GCPのサービスアカウント認証情報を`google_service_account.json`としてルートに保存
 2. `.env.templete`の内容をGCP上の環境変数として設定
-3. `zip deploy *.py google_service_account.json requirements.txt`を実行して`deploy.zip`を生成
+3. GCPの設定にて、ランタイムを`Python3.9`、エントリポイントを`on_http_trigger`に設定
+3. `zip deploy src/*.py google_service_account.json requirements.txt`を実行して`deploy.zip`を生成
 4. `deploy.zip`をCloud Functionsにアップロードしてデプロイ
 
-# ローカルでの実行方法
+# ローカルでのテスト実行
 ### 環境変数とAPIキーの設定
 1. GCPのサービスアカウント認証情報を`google_service_account.json`としてルートに保存
 2. `.env.templete`をコピーした`.env`に認証情報等を入力
@@ -18,7 +19,7 @@ docker-compose up -d
 ```
 ### スクリプトの実行方法
 ```shell
-docker-compose exec python3 python3 main.py
+docker-compose exec python3 python3 src/main.py
 ```
 
 ### コンテナ再構築
