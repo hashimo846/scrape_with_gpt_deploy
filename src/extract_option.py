@@ -17,6 +17,20 @@ def str_question(product_name:str, item:Dict) -> str:
     text += 'また、選択肢にないものは出力に含めないでください。\n'
     return text
 
+def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
+    output_format = '{\"' + item['name'] +'\":[\"\",\"\"]}'
+    system_message = 'You will be provided with a key word, available options, an expected output format and an overview text about the product {}. '.format(product_name)
+    system_message += 'Your task is to refer information about the key word from only the provided overview, then select relevant options from only the provided options. '
+    system_message += 'If there is no relevant option, output empty string. '
+    system_message += 'In addition, you MUST answer in JSON, the provided output format. '
+    system_message += 'Do NOT output anything that is not included in the provided options.'
+    user_message = 'Key Word: {}\n\nOptions: {}\n\nOutput Format: {}\n\nOverview: {}'.format(item['name'], ', '.join(item['options']), output_format, input_text)
+    messages = [
+        {'role':'system', 'content':system_message},
+        {'role':'user', 'content':user_message}
+    ]
+    return messages
+
 # プロンプト中の選択肢部分の文字列を返す
 def str_option(item:Dict) -> str:
     text = '#選択肢\n'
@@ -89,7 +103,10 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
 def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
-        prompt = str_prompt(product_name, item, input_text)
-        raw_answers.append(openai_handler.send(prompt))
+        # prompt = str_prompt(product_name, item, input_text)
+        # raw_answers.append(openai_handler.send(prompt))
+        messages = messages_question_prompt(input_text, product_name, item)
+        logger.debug(log.format('選択項目抽出プロンプト', messages))
+        raw_answers.append(openai_handler.send_messages(messages))
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)
