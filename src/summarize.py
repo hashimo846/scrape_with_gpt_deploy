@@ -88,7 +88,7 @@ def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, ma
     system_message += 'Your task is to add as detailed information as possible of specification and features about the product to the unfinished excerpt from only the quote, then you produce a more enriched excerpt in Japanese. '
     system_message += 'In addition, if there are the information related to the key words in the provided excerpt or quote, you MUST include it in your answer.'
     system_message += 'You MUST answer in {} characters or less.'.format(max_char)
-    user_message = 'Key words: {}\n\nUnfinished Excerpt: {}\n\nQuote: {}'.format(','.join(item_names), existing_answer, input_text)
+    user_message = 'Key Words: {}\n\nUnfinished Excerpt: {}\n\nQuote: {}'.format(','.join(item_names), existing_answer, input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message}

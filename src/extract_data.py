@@ -21,6 +21,19 @@ def str_question(product_name:str, items:List[Dict]) -> str:
     text += 'の情報を抜き出し、出力形式に従ってJSONで出力してください。\n'
     return text
 
+def messages_question_prompt(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
+    item_names = [item['name'] for item in items]
+    output_format = '{\"' + '\":\"\",\"'.join([item['name'] for item in items]) + '\":\"\"}'
+    system_message = 'You will be provided with extraction targets, an expected output format and an overview text about the product {}. '.format(product_name)
+    system_message += 'Your task is to extract information about the provided extraction targets in Japanese from only the provided overview. '
+    system_message += 'In addition, you MUST answer in JSON, the provided output format.'
+    user_message = 'Extraction Targets: {}\n\nOutput Format: {}\n\nOverview: {}'.format(', '.join(item_names), output_format, input_text)
+    messages = [
+        {'role':'system', 'content':system_message},
+        {'role':'user', 'content':user_message}
+    ]
+    return messages
+
 # プロンプト中の出力形式部分の文字列を返す
 def str_format(item_list:List[str]) -> str:
     text = '#出力形式\n'
@@ -73,8 +86,11 @@ def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     raw_answers = []
     item_idx = 0
     while item_idx < len(items):
-        prompt = str_prompt(product_name, input_text, item_list = items[item_idx:item_idx+ITEM_LIMIT])
-        raw_answers.append(openai_handler.send(prompt))
+        # prompt = str_prompt(product_name, input_text, item_list = items[item_idx:item_idx+ITEM_LIMIT])
+        # raw_answers.append(openai_handler.send(prompt))
+        messages = messages_question_prompt(input_text, product_name, items[item_idx:item_idx+ITEM_LIMIT])
+        logger.debug(log.format('データ項目抽出プロンプト', messages))
+        raw_answers.append(openai_handler.send_messages(messages))
         item_idx += ITEM_LIMIT
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)
