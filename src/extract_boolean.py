@@ -20,6 +20,19 @@ def str_question(item:str) -> str:
     text += 'また、入力に' + item['name'] + 'に関する記載がない場合は、「不明」を出力してください。\n'
     return text
 
+def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
+    output_format = '{\"' + 'output' +'\":\"\"}'
+    system_message = 'You will be provided with a check item, an expected output format and an overview text about the product {}. '.format(product_name)
+    system_message += 'Your task is to refer to only the provided overview, then find out if the product meets the provided check item. '
+    system_message += 'Output \"True\" if the product meets the check item, \"False\" if not, or an empty string if it is impossible to find out it from only the provided overview. '
+    system_message += 'In addition, you MUST answer in JSON, the provided output format.'
+    user_message = 'Check Item: {}\n\nOutput Format: {}\n\nOverview: {}'.format(item['name'], output_format, input_text)
+    messages = [
+        {'role':'system', 'content':system_message},
+        {'role':'user', 'content':user_message}
+    ]
+    return messages
+
 # プロンプト中の選択肢部分の文字列を返す
 def str_option(option = OPTION) -> str:
     text = '#選択肢\n'
@@ -65,10 +78,10 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
             logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answers[i]))
-            json_dict = {'出力': '不明'}
-        if json_dict['出力'] == '該当する':
+            json_dict = {'output': ''}
+        if json_dict['output'] == 'True':
             answers_dict[items[i]['name']] = True
-        elif json_dict['出力'] == '該当しない':
+        elif json_dict['output'] == 'False':
             answers_dict[items[i]['name']] = False
         else:
             answers_dict[items[i]['name']] = ''
@@ -78,8 +91,11 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
 def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
-        prompt = str_prompt(item, input_text)
-        raw_answers.append(openai_handler.send(prompt))
+        # prompt = str_prompt(item, input_text)
+        # raw_answers.append(openai_handler.send(prompt))
+        messages = messages_question_prompt(input_text, product_name, item)
+        logger.debug(log.format('二値項目抽出プロンプト', messages))
+        raw_answers.append(openai_handler.send_messages(messages))
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)
 
