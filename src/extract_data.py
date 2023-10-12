@@ -21,7 +21,7 @@ def str_question(product_name:str, items:List[Dict]) -> str:
     text += 'の情報を抜き出し、出力形式に従ってJSONで出力してください。\n'
     return text
 
-def messages_question_prompt(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
+def messages_question_prompt(input_text:str, product_name:str, items:List[Dict]) -> List[Dict]:
     item_names = [item['name'] for item in items]
     output_format = '{\"' + '\":\"\",\"'.join([item['name'] for item in items]) + '\":\"\"}'
     system_message = 'You will be provided with extraction targets, an expected output format and an overview text about the product {}. '.format(product_name)
