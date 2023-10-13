@@ -5,9 +5,9 @@
 1. GCPのサービスアカウント認証情報を`google_service_account.json`としてルートに保存
 2. `.env.templete`の内容をGCP上の環境変数として設定
 3. GCPの設定にて、ランタイムを`Python3.9`、エントリポイントを`on_http_trigger`に設定
-3. 次を実行して`deploy.zip`を生成
+3. 次を実行して`deploy.zip`を生成（-jオプションはsrc配下のファイルを同一ディレクトリに展開するため）
     ```shell
-    zip deploy src/*.py google_service_account.json requirements.txt
+    zip -j deploy src/*.py google_service_account.json requirements.txt
     ```
 4. `deploy.zip`をCloud Functionsにアップロードしてデプロイ
 
