@@ -16,52 +16,7 @@ OVERLAP_TOKEN = int(os.getenv("OVERLAP_TOKEN"))
 # 1プロンプトに含む入力の最大トークン数
 MAX_INPUT_TOKEN = int(os.getenv("MAX_INPUT_TOKEN"))
 
-# プロンプト中の質問部分の文字列を返す
-def str_question(product:Dict) -> str:
-    text = 'あなたの仕事は、与えられた文章から商品' + product['name'] + 'に関する情報を抽出することです。\n'
-    text += '固有名詞や定量的な情報は、可能な限り出力に含めてください。\n'
-    text += 'また、次の重要項目に関する情報が文章中にある場合は、必ず出力に含めてください。\n'
-    return text
-
-def str_refine_question(product:Dict, existing_answer:str) -> str:
-    text = 'あなたの仕事は、与えられた文章から商品' + product['name'] + 'に関する情報を抽出することです。\n'
-    text += '途中までの抽出結果があります： ' + existing_answer + '\n'
-    text += '必要に応じて与えられた文章から情報を抽出し、途中までの抽出結果に加えてください。\n'
-    text += '固有名詞や定量的な情報は、可能な限り出力に含めてください。\n'
-    text += 'また、次の重要項目に関する情報が文章中にある場合は、必ず出力に含めてください。\n'
-    return text
-
-# プロンプト中の重要項目の文字列を返す
-def str_important_items(master_items:Dict) -> str:
-    item_names = []
-    for key in master_items.keys():
-        for item in master_items[key]:
-            item_names.append(item['name'])
-    text = '#重要項目\n'
-    text += ', '.join(item_names) + '\n'
-    return text
-
-# プロンプト中の入力部分の文字列を返す
-def str_input(input_text:str) -> str:
-    text = '#文章\n'
-    text += input_text + '\n'
-    return text
-
-# プロンプト中の出力部分の文字列を返す
-def str_output() -> str:
-    return '#要約文'
-
-# プロンプトの文字列を返す
-def str_summarize_prompt(input_text:str, product:Dict, master_items:Dict) -> str:
-    prompt = '\n'.join([
-        str_question(product), 
-        str_important_items(master_items),
-        str_input(input_text),
-        str_output(),
-    ])
-    return prompt
-
-# プロンプトのメッセージ群を返す
+# 初回要約プロンプト生成
 def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, max_char = 1000) -> List:
     item_names = []
     for key in master_items.keys():
@@ -78,7 +33,7 @@ def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, m
     ]
     return messages
 
-# refine用のメッセージ群を返す
+# Refine用プロンプト生成
 def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict, max_char = 1000) -> List:
     item_names = []
     for key in master_items.keys():
@@ -95,23 +50,13 @@ def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, ma
     ]
     return messages
 
-# refine用のプロンプトの文字列を返す
-def str_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict) -> str:
-    prompt = '\n'.join([
-        str_refine_question(product, existing_answer), 
-        str_important_items(master_items),
-        str_input(input_text),
-        str_output(),
-    ])
-    return prompt
-
 # 決められたトークン数ごとに分割する
 def split_by_token(input_text:str, max_token:int = MAX_INPUT_TOKEN, overlap_token:int = OVERLAP_TOKEN) -> List[str]:
     text_splitter = TokenTextSplitter(chunk_size=max_token, chunk_overlap=overlap_token)
     texts = text_splitter.split_text(input_text)
     return texts
 
-# 商品ページからテキストを取得してGPTに入力し、商品情報をスクレイピング
+# 商品詳細スペックの要約
 def summarize(input_text:str, product:Dict, master_items:Dict) -> str:
     # return map_reduce(input_text, product, master_items)
     return refine(input_text, product, master_items)
@@ -160,10 +105,3 @@ def refine(input_text:str, product:Dict, master_items:Dict) -> str:
         # GPTの回答を取得
         answer_text = openai_handler.send_messages(messages)
     return answer_text
-
-# テスト用
-def main():
-    pass
-
-if __name__ == '__main__':
-    main()
