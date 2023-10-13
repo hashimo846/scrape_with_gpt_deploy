@@ -32,12 +32,12 @@ def send(prompt:str) -> str:
     return response.choices[0]['message']['content'].strip()
 
 # メッセージ群を送信して回答を取得
-def send_messages(messages:List) -> str:
+def send_messages(messages:List, max_tokens = 1500) -> str:
     # send prompt
     while True:
         try:
             logger.info(log.format('プロンプト送信中', 'SEND_PROMPT: {}'.format(messages)))
-            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = 1500)
+            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = max_tokens)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)

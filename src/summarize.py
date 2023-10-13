@@ -17,15 +17,15 @@ OVERLAP_TOKEN = int(os.getenv("OVERLAP_TOKEN"))
 MAX_INPUT_TOKEN = int(os.getenv("MAX_INPUT_TOKEN"))
 
 # 初回要約プロンプト生成
-def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, max_char = 1000) -> List:
+def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, max_char = 800) -> List:
     item_names = []
     for key in master_items.keys():
         for item in master_items[key]:
             item_names.append(item['name'])
     system_message = 'You will be provided with key words and a web page excerpt about the product {}. '.format(product['name'])
-    system_message += 'Your task is to extract as detailed information as possible of specification and features about the product from only the provided excerpt, then you answer it in Japanese. '
-    system_message += 'In addition, if there are the information related to the key words in the provided excerpt, you MUST include it in your answer.'
-    system_message += 'You MUST answer in {} characters or less.'.format(max_char)
+    system_message += 'Your task is to produce as detailed a specification sheet as possible about the product from only the provided excerpt. '
+    system_message += 'If there are the information related to the key words in the provided excerpt, you MUST include it in your answer. '
+    system_message += 'You MUST answer in {} characters or less in Japanese.'.format(max_char)
     user_message = 'Key Words: {}\n\nExcerpt: {}'.format(', '.join(item_names), input_text)
     messages = [
         {'role':'system', 'content':system_message},
@@ -39,11 +39,11 @@ def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, ma
     for key in master_items.keys():
         for item in master_items[key]:
             item_names.append(item['name'])
-    system_message = 'You will be provided with key words, an unfinished summary and a web page excerpt about the product {}. '.format(product['name'])
-    system_message += 'Your task is to add as detailed information as possible of specification and features about the product to the unfinished summary from only the provided excerpt, then you produce a more enriched summary in Japanese. '
-    system_message += 'In addition, if there are the information related to the key words in the provided summary or excerpt, you MUST include it in your answer.'
-    system_message += 'You MUST answer in {} characters or less.'.format(max_char)
-    user_message = 'Key Words: {}\n\nUnfinished Summary: {}\n\nExcerpt: {}'.format(','.join(item_names), existing_answer, input_text)
+    system_message = 'You will be provided with key words, an unfinished specification sheet and a web page excerpt about the product {}. '.format(product['name'])
+    system_message += 'Your task is to add as detailed information as possible about the product to the unfinished specification sheet from only the provided excerpt, then you produce a more complete sheet. '
+    system_message += 'If there are the information related to the key words in the provided specification sheet or excerpt, you MUST include it in your answer. '
+    system_message += 'You MUST answer in {} characters or less in Japanese.'.format(max_char)
+    user_message = 'Key Words: {}\n\nUnfinished Specification Sheet: {}\n\nExcerpt: {}'.format(','.join(item_names), existing_answer, input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message}
@@ -93,7 +93,7 @@ def refine(input_text:str, product:Dict, master_items:Dict) -> str:
 
     # 初めの分割の要約
     messages = messages_summarize_prompt(first_split, product, master_items)
-    answer_text = openai_handler.send_messages(messages)
+    answer_text = openai_handler.send_messages(messages, max_tokens = 1200)
     logger.debug(log.format('初回要約プロンプト', messages))
 
     # 二個目以降の分割の要約
@@ -103,5 +103,5 @@ def refine(input_text:str, product:Dict, master_items:Dict) -> str:
         # 要約のプロンプトをログ出力
         logger.debug(log.format('二回目以降要約プロンプト', messages))
         # GPTの回答を取得
-        answer_text = openai_handler.send_messages(messages)
+        answer_text = openai_handler.send_messages(messages, max_tokens = 1200)
     return answer_text
