@@ -10,7 +10,7 @@ logger = log.init(__name__, DEBUG)
 
 # プロンプトを生成
 def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
-    output_format = '{\"' + item['name'] +'\":[\"\",\"\"]}'
+    output_format = '{\"' + item['name'] +'\":[\"\", \"\"]}'
     system_message = 'You will be provided with a key word, available options, an expected output format and an overview text about the product {}. '.format(product_name)
     system_message += 'Your task is to refer to information about the key word from only the provided overview, then select relevant options from only the provided options. '
     system_message += 'If there is no relevant option, output empty string. '
