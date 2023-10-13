@@ -11,16 +11,7 @@ ITEM_LIMIT = 4
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# プロンプト中の質問部分の文字列を返す
-def str_question(product_name:str, items:List[Dict]) -> str:
-    text = '今から入力と期待する出力形式を与えます。\n'
-    text += '入力の情報のみを用いて、'
-    if product_name != '': 
-        text += '製品 ' + product_name + ' の'
-    text += '、'.join([item['name'] for item in items])
-    text += 'の情報を抜き出し、出力形式に従ってJSONで出力してください。\n'
-    return text
-
+# プロンプトを生成
 def messages_question_prompt(input_text:str, product_name:str, items:List[Dict]) -> List[Dict]:
     item_names = [item['name'] for item in items]
     output_format = '{\"' + '\":\"\",\"'.join([item['name'] for item in items]) + '\":\"\"}'
@@ -33,34 +24,6 @@ def messages_question_prompt(input_text:str, product_name:str, items:List[Dict])
         {'role':'user', 'content':user_message}
     ]
     return messages
-
-# プロンプト中の出力形式部分の文字列を返す
-def str_format(item_list:List[str]) -> str:
-    text = '#出力形式\n'
-    text += '{\"' + '\":\"\",\"'.join([item['name'] for item in item_list]) + '\":\"\"}' + '\n'
-    return text
-
-# プロンプト中の出力部分の文字列を返す
-def str_output() -> str:
-    text = '#出力'
-    return text
-
-# プロンプト中の入力部分の文字列を返す
-def str_input(input_text:str) -> str:
-    text = '#入力\n'
-    text += input_text + '\n'
-    return text
-
-# 生成したプロンプトのリスト返す
-def str_prompt(product_name:str, input_text:str, item_list:List[str]) -> List[str]:
-    # only one prompt
-    prompt = '\n'.join([
-        str_question(product_name, item_list), 
-        str_format(item_list), 
-        str_input(input_text),
-        str_output(),
-    ])
-    return prompt
 
 # 回答をパース
 def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
@@ -86,8 +49,6 @@ def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     raw_answers = []
     item_idx = 0
     while item_idx < len(items):
-        # prompt = str_prompt(product_name, input_text, item_list = items[item_idx:item_idx+ITEM_LIMIT])
-        # raw_answers.append(openai_handler.send(prompt))
         messages = messages_question_prompt(input_text, product_name, items[item_idx:item_idx+ITEM_LIMIT])
         logger.debug(log.format('データ項目抽出プロンプト', messages))
         raw_answers.append(openai_handler.send_messages(messages))

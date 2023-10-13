@@ -8,15 +8,7 @@ from typing import List, Dict
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# プロンプト中の質問部分の文字列を返す
-def str_question(product_name:str, item:Dict) -> str:
-    text = '今から入力、選択肢、期待する出力形式を与えます。\n'
-    text += '入力のみを用いて、' + product_name + 'について、'
-    text += item['name'] + 'を選択肢の中から複数選択し、出力形式に従ってJSONで出力してください。\n'
-    text += 'もし選択肢の中に該当するものがない場合は、出力形式に従って空の文字列を出力してください。\n'
-    text += 'また、選択肢にないものは出力に含めないでください。\n'
-    return text
-
+# プロンプトを生成
 def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
     output_format = '{\"' + item['name'] +'\":[\"\",\"\"]}'
     system_message = 'You will be provided with a key word, available options, an expected output format and an overview text about the product {}. '.format(product_name)
@@ -30,41 +22,6 @@ def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> Lis
         {'role':'user', 'content':user_message}
     ]
     return messages
-
-# プロンプト中の選択肢部分の文字列を返す
-def str_option(item:Dict) -> str:
-    text = '#選択肢\n'
-    text += '- '
-    text += '\n- '.join(item['options']) + '\n'
-    return text
-
-# プロンプト中の出力形式部分の文字列を返す
-def str_format(item:Dict) -> str:
-    text = '#出力形式\n'
-    text += '{\"' + item['name'] +'\":[\"\",\"\"]}' + '\n'
-    return text
-
-# プロンプト中の出力部分の文字列を返す
-def str_output() -> str:
-    text = '#出力'
-    return text
-
-# プロンプト中の入力部分の文字列を返す
-def str_input(input_text:str) -> str:
-    text = '#入力\n'
-    text += input_text + '\n'
-    return text
-
-# 生成したプロンプトのリスト返す
-def str_prompt(product_name:str, item:Dict, input_text:str) -> List[str]:
-    prompt = '\n'.join([
-        str_question(product_name, item), 
-        str_option(item),
-        str_format(item), 
-        str_input(input_text),
-        str_output(),
-    ])
-    return prompt
 
 # 回答をパース
 def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
@@ -103,8 +60,6 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
 def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
-        # prompt = str_prompt(product_name, item, input_text)
-        # raw_answers.append(openai_handler.send(prompt))
         messages = messages_question_prompt(input_text, product_name, item)
         logger.debug(log.format('選択項目抽出プロンプト', messages))
         raw_answers.append(openai_handler.send_messages(messages))
