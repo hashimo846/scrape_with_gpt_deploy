@@ -15,13 +15,16 @@ MODEL = os.getenv("OPENAI_MODEL")
 openai.organization = os.getenv("OPENAI_ORGANIZATION")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 
+# GPTの回答の最大トークン数
+RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
+
 # プロンプトを送信して回答を取得
 def send(prompt:str) -> str:
     messages = [{'role':'user', 'content':prompt}]
     # send prompt
     while True:
         try:
-            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60, temperature = 0, max_tokens = 1500)
+            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60, temperature = 0, max_tokens = RESPONCE_MAX_TOKEN)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
@@ -32,12 +35,12 @@ def send(prompt:str) -> str:
     return response.choices[0]['message']['content'].strip()
 
 # メッセージ群を送信して回答を取得
-def send_messages(messages:List, max_tokens = 1500) -> str:
+def send_messages(messages:List) -> str:
     # send prompt
     while True:
         try:
             logger.info(log.format('プロンプト送信中', 'SEND_PROMPT: {}'.format(messages)))
-            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = max_tokens)
+            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = RESPONCE_MAX_TOKEN)
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)

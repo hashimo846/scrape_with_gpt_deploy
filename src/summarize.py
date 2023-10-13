@@ -9,15 +9,15 @@ from typing import List, Dict
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# 1プロンプトに含むトークン数の上限
-MAX_TOKEN = int(os.getenv("MAX_TOKEN"))
-# 入力を分割する際の重複するトークン数
-OVERLAP_TOKEN = int(os.getenv("OVERLAP_TOKEN"))
-# 1プロンプトに含む入力の最大トークン数
-MAX_INPUT_TOKEN = int(os.getenv("MAX_INPUT_TOKEN"))
+# 要約の字数制限
+SUMMARY_OUTPUT_CHAR = int(os.getenv("SUMMARY_OUTPUT_CHAR"))
+# プロンプト中の入力文の最大トークン数
+INPUT_MAX_TOKEN = int(os.getenv("INPUT_MAX_TOKEN"))
+# 入力文を分割する際の重複させるトークン数
+SPLIT_OVERLAP_TOKEN = int(os.getenv("SPLIT_OVERLAP_TOKEN"))
 
 # 初回要約プロンプト生成
-def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, max_char = 800) -> List:
+def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, max_char = SUMMARY_OUTPUT_CHAR) -> List:
     item_names = []
     for key in master_items.keys():
         for item in master_items[key]:
@@ -34,7 +34,7 @@ def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, m
     return messages
 
 # Refine用プロンプト生成
-def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict, max_char = 800) -> List:
+def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict, max_char = SUMMARY_OUTPUT_CHAR) -> List:
     item_names = []
     for key in master_items.keys():
         for item in master_items[key]:
@@ -51,7 +51,7 @@ def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, ma
     return messages
 
 # 決められたトークン数ごとに分割する
-def split_by_token(input_text:str, max_token:int = MAX_INPUT_TOKEN, overlap_token:int = OVERLAP_TOKEN) -> List[str]:
+def split_by_token(input_text:str, max_token:int = INPUT_MAX_TOKEN, overlap_token:int = SPLIT_OVERLAP_TOKEN) -> List[str]:
     text_splitter = TokenTextSplitter(chunk_size=max_token, chunk_overlap=overlap_token)
     texts = text_splitter.split_text(input_text)
     return texts
@@ -86,22 +86,18 @@ def map_reduce(input_text:str, product:Dict, master_items:Dict) -> str:
 
 # refineアルゴリズムで要約
 def refine(input_text:str, product:Dict, master_items:Dict) -> str:
-    # 入力文が長い場合は分割(最大1000トークン)
-    split_texts = split_by_token(input_text = input_text, max_token = 1000)
+    # 入力文が長い場合は分割
+    split_texts = split_by_token(input_text = input_text)
     first_split = split_texts[0]
     additional_split = split_texts[1:]
 
     # 初めの分割の要約
     messages = messages_summarize_prompt(first_split, product, master_items)
-    answer_text = openai_handler.send_messages(messages, max_tokens = 1200)
     logger.debug(log.format('初回要約プロンプト', messages))
+    answer_text = openai_handler.send_messages(messages)
 
     # 二個目以降の分割の要約
     for split in additional_split:
-        # GPTに入力用のプロンプトを作成
         messages = messages_refine_prompt(answer_text, split, product, master_items)
-        # 要約のプロンプトをログ出力
-        logger.debug(log.format('二回目以降要約プロンプト', messages))
-        # GPTの回答を取得
-        answer_text = openai_handler.send_messages(messages, max_tokens = 1200)
+        answer_text = openai_handler.send_messages(messages)
     return answer_text
