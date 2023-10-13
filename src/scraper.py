@@ -4,7 +4,7 @@ import requests
 import log
 from typing import List, Dict
 import os
-import parser
+import webpage_parser
 from urllib.parse import urlencode
 
 # ロガーの初期化
@@ -55,7 +55,7 @@ def scrape_all(url_list:List[str] = ['']) -> str:
     # 各URLからテキストを取得
     for idx, url in enumerate(url_list):
         # ドメインによってURLのタイプを判定
-        domain = parser.judge_domain(url)
+        domain = webpage_parser.judge_domain(url)
         # ドメインによってページソース取得処理を切り替え
         if domain == 'amazon':
             # Amazonの場合は日本語で取得するオプションを付与
@@ -70,9 +70,9 @@ def scrape_all(url_list:List[str] = ['']) -> str:
             continue
         # ドメインによってパーサを切り替え
         if domain == 'amazon':
-            text = parser.parse_amazon(source)
+            text = webpage_parser.parse_amazon(source)
         else:
-            text = parser.parse_text(source)
+            text = webpage_parser.parse_text(source)
         # テキストが取得できなかった場合はスキップ
         if text == None:
             status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得失敗')
