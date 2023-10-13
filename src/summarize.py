@@ -22,11 +22,11 @@ def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, m
     for key in master_items.keys():
         for item in master_items[key]:
             item_names.append(item['name'])
-    system_message = 'You will be provided with key words and a web page quote about the product {}. '.format(product['name'])
-    system_message += 'Your task is to extract as detailed information as possible of specification and features about the product from only the quote, then you answer it in Japanese. '
-    system_message += 'In addition, if there are the information related to the key words in the provided quote, you MUST include it in your answer.'
+    system_message = 'You will be provided with key words and a web page excerpt about the product {}. '.format(product['name'])
+    system_message += 'Your task is to extract as detailed information as possible of specification and features about the product from only the provided excerpt, then you answer it in Japanese. '
+    system_message += 'In addition, if there are the information related to the key words in the provided excerpt, you MUST include it in your answer.'
     system_message += 'You MUST answer in {} characters or less.'.format(max_char)
-    user_message = 'Key words: {}\n\nQuote: {}'.format(', '.join(item_names), input_text)
+    user_message = 'Key Words: {}\n\nExcerpt: {}'.format(', '.join(item_names), input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message},
@@ -34,16 +34,16 @@ def messages_summarize_prompt(input_text:str, product:Dict, master_items:Dict, m
     return messages
 
 # Refine用プロンプト生成
-def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict, max_char = 1000) -> List:
+def messages_refine_prompt(existing_answer:str, input_text:str, product:Dict, master_items:Dict, max_char = 800) -> List:
     item_names = []
     for key in master_items.keys():
         for item in master_items[key]:
             item_names.append(item['name'])
-    system_message = 'You will be provided with key words, an unfinished excerpt and a web page quote about the product {}. '.format(product['name'])
-    system_message += 'Your task is to add as detailed information as possible of specification and features about the product to the unfinished excerpt from only the quote, then you produce a more enriched excerpt in Japanese. '
-    system_message += 'In addition, if there are the information related to the key words in the provided excerpt or quote, you MUST include it in your answer.'
+    system_message = 'You will be provided with key words, an unfinished summary and a web page excerpt about the product {}. '.format(product['name'])
+    system_message += 'Your task is to add as detailed information as possible of specification and features about the product to the unfinished summary from only the provided excerpt, then you produce a more enriched summary in Japanese. '
+    system_message += 'In addition, if there are the information related to the key words in the provided summary or excerpt, you MUST include it in your answer.'
     system_message += 'You MUST answer in {} characters or less.'.format(max_char)
-    user_message = 'Key Words: {}\n\nUnfinished Excerpt: {}\n\nQuote: {}'.format(','.join(item_names), existing_answer, input_text)
+    user_message = 'Key Words: {}\n\nUnfinished Summary: {}\n\nExcerpt: {}'.format(','.join(item_names), existing_answer, input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message}
