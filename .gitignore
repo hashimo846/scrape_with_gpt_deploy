@@ -1,6 +1,5 @@
-#api keyをアップロードしないようにするため
+# APIキー等をアップロートしないための設定
 .env
 __pycache__/
 google_service_account.json
 deploy.zip
-headless-chromium
