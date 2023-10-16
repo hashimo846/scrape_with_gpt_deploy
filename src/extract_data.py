@@ -42,6 +42,10 @@ def parse_answers(items:List[str], answers:List[str]) -> List[Dict]:
     for item in items:
         if item['name'] in all_dict.keys():
             answers_dict[item['name']] = all_dict[item['name']]
+    # ”不明”を空文字に変換
+    for key in answers_dict.keys():
+        if answers_dict[key] == '不明':
+            answers_dict[key] = ''
     return answers_dict
 
 # 対象項目の情報を抽出
