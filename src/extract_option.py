@@ -12,8 +12,8 @@ logger = log.init(__name__, DEBUG)
 def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
     output_format = '{\"' + item['name'] +'\":[\"\", \"\"]}'
     system_message = 'You will be provided with a key word, available options, an expected output format and an overview text about the product {}. '.format(product_name)
-    system_message += 'Your task is to refer to information about the key word from only the provided overview, then select relevant options from only the provided options. '
-    system_message += 'If there is no relevant option, output empty string. '
+    system_message += 'Your task is to refer to only the provided overview, then select appropriate options for the key word from only the provided options. '
+    system_message += 'If there is no appropriate option, output empty string (""). '
     system_message += 'In addition, you MUST answer in JSON, the provided output format. '
     system_message += 'Do NOT output anything that is not included in the provided options.'
     user_message = 'Key Word: {}\n\nOptions: {}\n\nOutput Format: {}\n\nOverview: {}'.format(item['name'], ', '.join(item['options']), output_format, input_text)

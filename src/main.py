@@ -99,7 +99,7 @@ def on_http_trigger(request) -> None:
 
 # ローカル実行時のプロセス
 def main() -> None:
-    for target_row_idx in range(2, 3):
+    for target_row_idx in range(2, 12):
         # 入力を取得
         sheet_url = 'https://docs.google.com/spreadsheets/d/1teGGnT62B82rdNEGvww36LFO-C09-KleCzHIN-BvlYA/edit?usp=sharing'
         # target_row_idx = 2
