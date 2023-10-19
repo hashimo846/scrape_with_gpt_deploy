@@ -56,14 +56,16 @@ def scrape_all(url_list:List[str] = ['']) -> str:
     for idx, url in enumerate(url_list):
         # ドメインによってURLのタイプを判定
         domain = webpage_parser.judge_domain(url)
+        source = get_page_source(url)
         # ドメインによってページソース取得処理を切り替え
-        if domain == 'amazon':
-            # Amazonの場合は日本語で取得するオプションを付与
-            url += '&language=ja_JP'
-            # Amazonの場合POSTで取得
-            source = get_page_source(url, mode='POST')
-        else:
-            source = get_page_source(url)
+        # if domain == 'amazon':
+        #     # Amazonの場合は日本語で取得するオプションを付与
+        #     url += '&language=ja_JP'
+        #     # Amazonの場合POSTで取得
+        #     source = get_page_source(url, mode='POST')
+        # else:
+        #     source = get_page_source(url)
+        
         # ページソースが取得出来なかった場合スキップ
         if source == None:
             status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得失敗')
