@@ -50,27 +50,27 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
         return
     else:
         outputs['execute_status'] += scrape_status + '\n'
-        outputs['get_text'] += full_text
+        outputs['get_text'] = full_text
         logger.debug(log.format('Webページから取得した全文', full_text))
     
     # 全文から要約文を取得
-    summarize_text = summarize.summarize(full_text, product, master_items)
-    if summarize_text == None:
-        outputs['execute_status'] += '要約文の取得失敗\n'
-        status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
-        return
-    else:
-        outputs['summary_text'] += summarize_text
-        logger.debug(log.format('要約文', summarize_text))
+    # summarize_text = summarize.summarize(full_text, product, master_items)
+    # if summarize_text == None:
+    #     outputs['execute_status'] += '要約文の取得失敗\n'
+    #     status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
+    #     return
+    # else:
+    #     outputs['summary_text'] += summarize_text
+    #     logger.debug(log.format('要約文', summarize_text))
 
     # 要約文から各項目を抽出
     answers = dict()
     raw_answers = dict()
-    answers['data'], raw_answers['data'] = extract_data.extract(input_text = summarize_text, product_name = product['name'], items = master_items['data'])
+    answers['data'], raw_answers['data'] = extract_data.extract(input_text = full_text, product_name = product['name'], items = master_items['data'])
     logger.debug(log.format('データ項目の抽出結果', answers['data']))
-    answers['boolean'], raw_answers['boolean'] = extract_boolean.extract(input_text = summarize_text, product_name = product['name'], items = master_items['boolean'])
+    answers['boolean'], raw_answers['boolean'] = extract_boolean.extract(input_text = full_text, product_name = product['name'], items = master_items['boolean'])
     logger.debug(log.format('Boolean項目の抽出結果', answers['boolean']))
-    answers['option'], raw_answers['option'] = extract_option.extract(input_text = summarize_text, product_name = product['name'], items = master_items['option'])
+    answers['option'], raw_answers['option'] = extract_option.extract(input_text = full_text, product_name = product['name'], items = master_items['option'])
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
     outputs |= answers['data'] | answers['boolean'] | answers['option']
     outputs['extract_result'] += str(raw_answers)
