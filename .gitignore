@@ -3,3 +3,5 @@
 __pycache__/
 google_service_account.json
 deploy.zip
+.DS_Store
+.cache/
