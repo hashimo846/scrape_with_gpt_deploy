@@ -21,7 +21,6 @@ RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
 
 # メッセージ群を送信して回答を取得
 def send_messages(messages:List, json_mode = False) -> str:
-    # send prompt
     while True:
         try:
             logger.info(log.format('プロンプト送信中', 'SEND_PROMPT: {}'.format(messages)))
