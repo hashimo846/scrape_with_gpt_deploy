@@ -5,9 +5,6 @@ from logging import DEBUG, INFO
 import openai_handler, log
 from typing import List, Dict
 
-# OPTION
-OPTION = ['該当する', '該当しない', '不明']
-
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
