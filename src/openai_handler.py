@@ -14,6 +14,7 @@ MODEL = os.getenv("OPENAI_MODEL")
 # OpenAI APIの認証
 openai.organization = os.getenv("OPENAI_ORGANIZATION")
 openai.api_key = os.getenv("OPENAI_API_KEY")
+client = openai.Client()
 
 # GPTの回答の最大トークン数
 RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
@@ -42,12 +43,19 @@ def send(prompt:str, json_mode = False) -> str:
     return response.choices[0]['message']['content'].strip()
 
 # メッセージ群を送信して回答を取得
-def send_messages(messages:List) -> str:
+def send_messages(messages:List, json_mode = False) -> str:
     # send prompt
     while True:
         try:
             logger.info(log.format('プロンプト送信中', 'SEND_PROMPT: {}'.format(messages)))
-            response = openai.ChatCompletion.create(model = MODEL, messages = messages, request_timeout = 60, temperature = 0, max_tokens = RESPONCE_MAX_TOKEN)
+            response = client.chat.completions.create(
+                model = MODEL, 
+                messages = messages, 
+                timeout = 60, 
+                temperature = 0, 
+                max_tokens = RESPONCE_MAX_TOKEN,  
+                response_format = {'type':'json_object' if json_mode else 'text'}
+            )
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
@@ -56,4 +64,5 @@ def send_messages(messages:List) -> str:
         else:
             break
     logger.info(log.format('レスポンス内容', 'RECEIVE_RESPONSE: {}'.format(response.usage)))
-    return response.choices[0]['message']['content'].strip()
+    print(response.choices[0].message.content.strip())
+    return response.choices[0].message.content.strip()

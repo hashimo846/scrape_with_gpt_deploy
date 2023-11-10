@@ -47,6 +47,6 @@ def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
     for item in items:
         messages = messages_question_prompt(input_text, product_name, item)
         logger.debug(log.format('二値項目抽出プロンプト', messages))
-        raw_answers.append(openai_handler.send_messages(messages))
+        raw_answers.append(openai_handler.send_messages(messages, json_mode = True))
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)
