@@ -52,16 +52,6 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
         outputs['execute_status'] += scrape_status + '\n'
         outputs['get_text'] = full_text
         logger.debug(log.format('Webページから取得した全文', full_text))
-    
-    # 全文から要約文を取得
-    # summarize_text = summarize.summarize(full_text, product, master_items)
-    # if summarize_text == None:
-    #     outputs['execute_status'] += '要約文の取得失敗\n'
-    #     status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
-    #     return
-    # else:
-    #     outputs['summary_text'] += summarize_text
-    #     logger.debug(log.format('要約文', summarize_text))
 
     # 要約文から各項目を抽出
     answers = dict()
