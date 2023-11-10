@@ -11,11 +11,11 @@ logger = log.init(__name__, DEBUG)
 # プロンプトの生成
 def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
     output_format = '{\"' + 'output' +'\":\"\"}'
-    system_message = 'You will be provided with a check item, an expected output format and an overview text about the product {}. '.format(product_name)
-    system_message += 'Your task is to refer to only the provided overview, then find out if the product meets the provided check item. '
-    system_message += 'Output \"True\" if the product meets the check item, \"False\" if not, or an empty string if it is impossible to find out it from only the provided overview. '
+    system_message = 'You will be provided with a check item, an expected output format and an excerpt texts about the product {}. '.format(product_name)
+    system_message += 'Your task is to refer to only the provided excerpt texts, then find out if the product meets the provided check item. '
+    system_message += 'Output \"True\" if the product meets the check item, \"False\" if not, or an empty string if it is impossible to find out it from only the provided excerpt texts. '
     system_message += 'In addition, you MUST answer in JSON, the provided output format.'
-    user_message = 'Check Item: {}\n\nOutput Format: {}\n\nOverview: {}'.format(item['name'], output_format, input_text)
+    user_message = 'Check Item: {}\n\nOutput Format: {}\n\nExcerpt texts: {}'.format(item['name'], output_format, input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message}
