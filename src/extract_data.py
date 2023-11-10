@@ -15,10 +15,10 @@ logger = log.init(__name__, DEBUG)
 def messages_question_prompt(input_text:str, product_name:str, items:List[Dict]) -> List[Dict]:
     item_names = [item['name'] for item in items]
     output_format = '{\"' + '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}'
-    system_message = 'You will be provided with extraction targets, an expected output format and an overview text about the product {}. '.format(product_name)
-    system_message += 'Your task is to extract information about the provided extraction targets in Japanese from only the provided overview. '
+    system_message = 'You will be provided with extraction targets, an expected output format and an excerpt texts about the product {}. '.format(product_name)
+    system_message += 'Your task is to extract information about the provided extraction targets in Japanese from only the provided excerpt texts. '
     system_message += 'In addition, you MUST answer in JSON, the provided output format.'
-    user_message = 'Extraction Targets: {}\n\nOutput Format: {}\n\nOverview: {}'.format(', '.join(item_names), output_format, input_text)
+    user_message = 'Extraction Targets: {}\n\nOutput Format: {}\n\nExcerpt texts: {}'.format(', '.join(item_names), output_format, input_text)
     messages = [
         {'role':'system', 'content':system_message},
         {'role':'user', 'content':user_message}
