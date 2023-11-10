@@ -19,12 +19,19 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
 
 # プロンプトを送信して回答を取得
-def send(prompt:str) -> str:
+def send(prompt:str, json_mode = False) -> str:
     messages = [{'role':'user', 'content':prompt}]
     # send prompt
     while True:
         try:
-            response = openai.ChatCompletion.create(model = MODEL,messages = messages, request_timeout = 60, temperature = 0, max_tokens = RESPONCE_MAX_TOKEN)
+            response = openai.ChatCompletion.create(
+                model = MODEL,
+                messages = messages,
+                request_timeout = 60, 
+                temperature = 0, 
+                max_tokens = RESPONCE_MAX_TOKEN, 
+                response_format = {'type':'json_object' if json_mode else 'text'}
+            )
         except Exception as e:
             logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
             sleep(1)
