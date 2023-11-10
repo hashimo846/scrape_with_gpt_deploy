@@ -19,29 +19,6 @@ client = openai.Client()
 # GPTの回答の最大トークン数
 RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
 
-# プロンプトを送信して回答を取得
-def send(prompt:str, json_mode = False) -> str:
-    messages = [{'role':'user', 'content':prompt}]
-    # send prompt
-    while True:
-        try:
-            response = openai.ChatCompletion.create(
-                model = MODEL,
-                messages = messages,
-                request_timeout = 60, 
-                temperature = 0, 
-                max_tokens = RESPONCE_MAX_TOKEN, 
-                response_format = {'type':'json_object' if json_mode else 'text'}
-            )
-        except Exception as e:
-            logger.error(log.format('プロンプト送信失敗', 'ERROR_MESSAGE: {}'.format(e)))
-            sleep(1)
-            logger.info(log.format('プロンプト再送信中', 'SEND_PROMPT: {}'.format(messages)))
-            continue
-        else:
-            break
-    return response.choices[0]['message']['content'].strip()
-
 # メッセージ群を送信して回答を取得
 def send_messages(messages:List, json_mode = False) -> str:
     # send prompt
