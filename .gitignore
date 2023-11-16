@@ -5,3 +5,4 @@ google_service_account.json
 deploy.zip
 .DS_Store
 .cache/
+test.yml
