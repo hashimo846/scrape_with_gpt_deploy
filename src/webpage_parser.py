@@ -14,7 +14,9 @@ DOMAIN_TYPES = {
 }
 
 # URLのドメインを判定
-def judge_domain(url:str) -> str:
+
+
+def judge_domain(url: str) -> str:
     # ドメインがどのサイトであるか判別
     for key in DOMAIN_TYPES.keys():
         # ドメインがURL内に含まれているか判定
@@ -25,7 +27,9 @@ def judge_domain(url:str) -> str:
     return 'others'
 
 # 不要な文字を削除してテキストのみ抽出
-def strip_text(text:str = '') -> str:
+
+
+def strip_text(text: str = '') -> str:
     # 不要な文字を削除
     text = text.replace('\n', '').replace('\t', '')
     text = text.replace('\r', '').replace('\v', '').replace('\f', '')
@@ -38,7 +42,9 @@ def strip_text(text:str = '') -> str:
     return text
 
 # BeautifulSoupオブジェクトから指定したこのタグからテキストを抽出（タグが見つからない場合はNoneを返す）
-def extract_text(parent:BeautifulSoup, tag:str, id:str = None) -> str:
+
+
+def extract_text(parent: BeautifulSoup, tag: str, id: str = None) -> str:
     child = parent.find(tag, id=id)
     if child != None:
         return child.text
@@ -46,13 +52,17 @@ def extract_text(parent:BeautifulSoup, tag:str, id:str = None) -> str:
         return None
 
 # 指定された要素の中身を削除
-def remove_content(parent:BeautifulSoup, tag:str, id:str = None) -> None:
+
+
+def remove_content(parent: BeautifulSoup, tag: str, id: str = None) -> None:
     child = parent.find(tag, id=id)
     if child != None:
         child.clear()
 
 # URLから全てのテキストを取得
-def parse_text(html_source:BeautifulSoup) -> str:
+
+
+def parse_text(html_source: BeautifulSoup) -> str:
     try:
         # テキストのみ抽出
         text = html_source.text
@@ -63,7 +73,8 @@ def parse_text(html_source:BeautifulSoup) -> str:
         logger.error(log.format('Webページの解析失敗', e))
         return None
 
-def parse_amazon(html_source:BeautifulSoup) -> str:
+
+def parse_amazon(html_source: BeautifulSoup) -> str:
     try:
         # 抽出した情報を格納するDict
         extracted_texts = dict()
@@ -77,21 +88,26 @@ def parse_amazon(html_source:BeautifulSoup) -> str:
         centerCol = ppd.find('div', id='centerCol')
 
         # 必要な部分からテキストを抽出
-        extracted_texts['title'] = extract_text(parent = centerCol, tag = 'div', id = 'title_feature_div')
-        overview = centerCol.find('div', id = 'productOverview_feature_div')
+        extracted_texts['title'] = extract_text(
+            parent=centerCol, tag='div', id='title_feature_div')
+        overview = centerCol.find('div', id='productOverview_feature_div')
         if overview != None:
-            remove_content(parent = overview, tag = 'div', id = 'poToggleButton')
-        extracted_texts['overview'] = extract_text(parent = centerCol, tag = 'div', id = 'productOverview_feature_div')
-        feature = centerCol.find('div', id = 'featurebullets_feature_div')
+            remove_content(parent=overview, tag='div', id='poToggleButton')
+        extracted_texts['overview'] = extract_text(
+            parent=centerCol, tag='div', id='productOverview_feature_div')
+        feature = centerCol.find('div', id='featurebullets_feature_div')
         if feature != None:
-            remove_content(parent = feature, tag = 'a', id = 'seeMoreDetailsLink')
-        extracted_texts['feature'] = extract_text(parent= centerCol, tag = 'div', id = 'featurebullets_feature_div')
-        extracted_texts['description'] = extract_text(parent = dp_container, tag = 'div', id = 'productDescription_feature_div')
+            remove_content(parent=feature, tag='a', id='seeMoreDetailsLink')
+        extracted_texts['feature'] = extract_text(
+            parent=centerCol, tag='div', id='featurebullets_feature_div')
+        extracted_texts['description'] = extract_text(
+            parent=dp_container, tag='div', id='productDescription_feature_div')
         # A+コンテンツのテキストを抽出
-        for div in dp_container.find_all('div', recursive = False):
+        for div in dp_container.find_all('div', recursive=False):
             if 'aplus' in div.get('id'):
-                extracted_texts[div.get('id')] = extract_text(parent = dp_container, tag = 'div', id = div.get('id'))
-            
+                extracted_texts[div.get('id')] = extract_text(
+                    parent=dp_container, tag='div', id=div.get('id'))
+
         # 抽出したテキストを結合
         log_text = output_text = ''
         for key in extracted_texts.keys():
@@ -110,8 +126,10 @@ def parse_amazon(html_source:BeautifulSoup) -> str:
         logger.error(log.format('Amazonのページ解析失敗', e))
         return None
 
+
 def main():
     pass
+
 
 if __name__ == '__main__':
     main()

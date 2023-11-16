@@ -15,24 +15,26 @@ logger = log.init(__name__, DEBUG)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
 # スプレッドシートのインスタンスを保持して扱うクラス
+
+
 class Spreadsheet:
     # ワークシート名
     MASTER_WORKSHEET_NAME = '項目_詳細情報'
     PRODUCT_WORKSHHET_NAME = '商品_詳細情報'
     # スプシ上の固定カラム
     INPUT_COLUMNS_KEY = {
-    'JAN(変更不可)':'jan',
-    '商品ID(変更不可)':'id', 
-    'メーカー名(変更不可)':'maker',
-    '商品名(変更不可)':'name', 
-    '参照URL(編集可能)':'reference_url', 
+        'JAN(変更不可)': 'jan',
+        '商品ID(変更不可)': 'id',
+        'メーカー名(変更不可)': 'maker',
+        '商品名(変更不可)': 'name',
+        '参照URL(編集可能)': 'reference_url',
     }
     FEEDBACK_COLUMNS_KEY = {
-    '実行ボタン':'execute_button',
-    '実行ステータス':'execute_status',
-    '取得文':'get_text',
-    '要約文':'summary_text',
-    '抽出結果':'extract_result',
+        '実行ボタン': 'execute_button',
+        '実行ステータス': 'execute_status',
+        '取得文': 'get_text',
+        '要約文': 'summary_text',
+        '抽出結果': 'extract_result',
     }
     # クラス内で保持する変数
     spreadsheet = None
@@ -42,7 +44,7 @@ class Spreadsheet:
     product_table = []
 
     # コンストラクタ（スプシURL必須）
-    def __init__(self, sheet_url:str) -> None:
+    def __init__(self, sheet_url: str) -> None:
         while True:
             try:
                 # Google APIの認証
@@ -50,8 +52,10 @@ class Spreadsheet:
                 # スプレッドシート取得
                 self.spreadsheet = gspread_client.open_by_url(sheet_url)
                 # ワークシート取得
-                self.master_worksheet = self.spreadsheet.worksheet(self.MASTER_WORKSHEET_NAME)
-                self.product_worksheet = self.spreadsheet.worksheet(self.PRODUCT_WORKSHHET_NAME)
+                self.master_worksheet = self.spreadsheet.worksheet(
+                    self.MASTER_WORKSHEET_NAME)
+                self.product_worksheet = self.spreadsheet.worksheet(
+                    self.PRODUCT_WORKSHHET_NAME)
                 # テーブル取得
                 self.master_table = self.master_worksheet.get_all_values()
                 self.product_table = self.product_worksheet.get_all_values()
@@ -62,7 +66,7 @@ class Spreadsheet:
                 continue
             else:
                 break
-    
+
     # スプレッドシートからマスタ情報の全項目を取得
     def get_master_items(self) -> Dict:
         try:
@@ -74,9 +78,9 @@ class Spreadsheet:
             option_items = self.__get_option_items(master)
             # to dict
             master_items = {
-                'boolean':boolean_items, 
-                'data':data_items,
-                'option':option_items,
+                'boolean': boolean_items,
+                'data': data_items,
+                'option': option_items,
             }
             return master_items
         except Exception as e:
@@ -84,7 +88,7 @@ class Spreadsheet:
             return None
 
     # スプシの入力部分を取得（JANから参照URLまでのカラム）
-    def get_inputs(self, target_row_idx:int, target_column_idx:int) -> Dict:
+    def get_inputs(self, target_row_idx: int, target_column_idx: int) -> Dict:
         try:
             # 各カラムのインデックスを特定
             input_header = self.product_table[0][:target_column_idx]
@@ -106,7 +110,7 @@ class Spreadsheet:
             return None
 
     # スプシの出力部分を取得（実行ボタンから最後の抽出項目までのカラム）
-    def get_outputs(self, target_row_idx:int, target_column_idx:int) -> Dict:
+    def get_outputs(self, target_row_idx: int, target_column_idx: int) -> Dict:
         # 各カラムのインデックスを特定
         output_header = self.product_table[0][target_column_idx:]
         output_columns_idx = dict()
@@ -121,9 +125,9 @@ class Spreadsheet:
         for key in output_columns_idx.keys():
             outputs[key] = target_range[output_columns_idx[key]]
         return outputs
-    
+
     # スプシの出力部分を書き換え（実行ボタンから最後の抽出項目までのカラム）
-    def set_outputs(self, target_row_idx:int, target_column_idx:int, outputs:Dict) -> None:
+    def set_outputs(self, target_row_idx: int, target_column_idx: int, outputs: Dict) -> None:
         # 各カラムのインデックスを特定
         output_header = self.product_table[0][target_column_idx:]
         output_columns_idx = dict()
@@ -137,9 +141,12 @@ class Spreadsheet:
         for key in outputs.keys():
             if key in output_columns_idx.keys():
                 target_range[output_columns_idx[key]] = str(outputs[key])
-        start_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+1)
-        end_cell = gspread.utils.rowcol_to_a1(target_row_idx+1, target_column_idx+len(target_range))
-        self.product_worksheet.update('{}:{}'.format(start_cell, end_cell), [target_range], value_input_option='USER_ENTERED')
+        start_cell = gspread.utils.rowcol_to_a1(
+            target_row_idx+1, target_column_idx+1)
+        end_cell = gspread.utils.rowcol_to_a1(
+            target_row_idx+1, target_column_idx+len(target_range))
+        self.product_worksheet.update('{}:{}'.format(start_cell, end_cell), [
+                                      target_range], value_input_option='USER_ENTERED')
         '''spreadのバージョン6になると、引数の順番が逆になる
         UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
         '''
@@ -150,25 +157,25 @@ class Spreadsheet:
         logger.info(log.format('スプレッドシートからマスタ情報取得中'))
         # get each column
         master = {
-            'features':self. __get_column(self.master_table, 0),
+            'features': self. __get_column(self.master_table, 0),
             'descriptions': self.__get_column(self.master_table, 1),
             'formats': self.__get_column(self.master_table, 2),
             'units': self.__get_column(self.master_table, 3),
             'filters': self.__get_column(self.master_table, 4),
         }
         return master
-    
+
     # 指定した列の全データをテーブルから取得
-    def __get_column(self, table:List, idx:int) -> List:
+    def __get_column(self, table: List, idx: int) -> List:
         return [row[idx] for row in table]
 
     # マスタ情報から二値項目を取得
-    def __get_boolean_items(self, master:Dict) -> List:
+    def __get_boolean_items(self, master: Dict) -> List:
         items, i = [], 0
         while i < len(master['formats']):
             if master['formats'][i] == '二値':
                 items.append({
-                    'name':master['features'][i],
+                    'name': master['features'][i],
                     'description': master['descriptions'][i],
                     'unit': master['units'][i],
                 })
@@ -176,12 +183,12 @@ class Spreadsheet:
         return items
 
     # マスタ情報からデータ項目を取得
-    def __get_data_items(self, master:Dict) -> List:
+    def __get_data_items(self, master: Dict) -> List:
         items, i = [], 0
         while i < len(master['formats']):
-            if master['formats'][i] in ['小数','整数','フリーワード']:
+            if master['formats'][i] in ['小数', '整数', 'フリーワード']:
                 items.append({
-                    'name': master['features'][i], 
+                    'name': master['features'][i],
                     'value_type': master['formats'][i],
                     'description': master['descriptions'][i],
                     'unit': master['units'][i],
@@ -190,7 +197,7 @@ class Spreadsheet:
         return items
 
     # マスタ情報から選択項目を取得
-    def __get_option_items(self, master:Dict) -> List:
+    def __get_option_items(self, master: Dict) -> List:
         items, i = [], 0
         while i < len(master['formats']):
             count = 0
@@ -201,7 +208,7 @@ class Spreadsheet:
                     options.append(master['filters'][i + count])
                     count += 1
                 items.append({
-                    'name': master['features'][i], 
+                    'name': master['features'][i],
                     'description': master['descriptions'][i],
                     'unit': master['units'][i],
                     'options': options,
@@ -210,13 +217,12 @@ class Spreadsheet:
             else:
                 i += 1
         return items
-    
 
     # Google APIの認証
-    def __authorize_gspread(self, credential_path:str = GOOGLE_CREDENTIAL_PATH) -> gspread.Client:
-        credentials =  service_account.Credentials.from_service_account_file(
-            credential_path, 
-            scopes = [
+    def __authorize_gspread(self, credential_path: str = GOOGLE_CREDENTIAL_PATH) -> gspread.Client:
+        credentials = service_account.Credentials.from_service_account_file(
+            credential_path,
+            scopes=[
                 'https://www.googleapis.com/auth/spreadsheets',
                 'https://www.googleapis.com/auth/drive',
             ]
@@ -225,6 +231,8 @@ class Spreadsheet:
         return gspread_client
 
 # ローカル実行時のプロセス
+
+
 def main():
     sheet_url = 'https://docs.google.com/spreadsheets/d/10Y1f2RzKXiSl-PXa-MEhPPxdm2cdPELVwfJ7miIxuzU/edit?usp=sharing'
     spreadsheet = Spreadsheet(sheet_url)
@@ -232,9 +240,10 @@ def main():
     logger.debug(log.format('マスター', spreadsheet.get_master_items()))
     output = spreadsheet.get_outputs(2, 5)
     logger.debug(log.format('出力部分', output))
-    output['execute_status'] = 'ok'    
+    output['execute_status'] = 'ok'
     output['execute_button'] = 'TRUE'
     spreadsheet.set_outputs(2, 5, output)
-    
+
+
 if __name__ == '__main__':
     main()

@@ -2,28 +2,35 @@ from extract_json import extract_json
 import json
 from langchain.text_splitter import TokenTextSplitter
 from logging import DEBUG, INFO
-import openai_handler, log
+import openai_handler
+import log
 from typing import List, Dict
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 # プロンプトの生成
-def messages_question_prompt(input_text:str, product_name:str, item:Dict) -> List[Dict]:
-    output_format = '{\"' + 'output' +'\":\"\"}'
-    system_message = 'You will be provided with a check item, an expected output format and an excerpt texts about the product {}. '.format(product_name)
+
+
+def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> List[Dict]:
+    output_format = '{\"' + 'output' + '\":\"\"}'
+    system_message = 'You will be provided with a check item, an expected output format and an excerpt texts about the product {}. '.format(
+        product_name)
     system_message += 'Your task is to refer to only the provided excerpt texts, then find out if the product meets the provided check item. '
     system_message += 'Output \"True\" if the product meets the check item, \"False\" if not, or an empty string if it is impossible to find out it from only the provided excerpt texts. '
     system_message += 'In addition, you MUST answer in JSON, the provided output format.'
-    user_message = 'Check Item: {}\n\nOutput Format: {}\n\nExcerpt texts: {}'.format(item['name'], output_format, input_text)
+    user_message = 'Check Item: {}\n\nOutput Format: {}\n\nExcerpt texts: {}'.format(
+        item['name'], output_format, input_text)
     messages = [
-        {'role':'system', 'content':system_message},
-        {'role':'user', 'content':user_message}
+        {'role': 'system', 'content': system_message},
+        {'role': 'user', 'content': user_message}
     ]
     return messages
 
 # 回答をパース
-def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
+
+
+def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
     answers_dict = dict()
     for i in range(len(items)):
         json_str = extract_json(answers[i])
@@ -31,7 +38,8 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
             json_dict = json.loads(json_str)
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
-            logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answers[i]))
+            logger.warning(log.format(
+                '回答が読み取れないため空の値とします', '回答：' + answers[i]))
             json_dict = {'output': ''}
         if json_dict['output'] == 'True':
             answers_dict[items[i]['name']] = True
@@ -42,11 +50,14 @@ def parse_answers(items:List[Dict], answers:List[str]) -> List[Dict]:
     return answers_dict
 
 # 対象項目の情報を抽出
-def extract(input_text:str, product_name:str, items:List[Dict]) -> List[str]:
+
+
+def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
         messages = messages_question_prompt(input_text, product_name, item)
         logger.debug(log.format('二値項目抽出プロンプト', messages))
-        raw_answers.append(openai_handler.send_messages(messages, json_mode = True))
+        raw_answers.append(openai_handler.send_messages(
+            messages, json_mode=True))
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)

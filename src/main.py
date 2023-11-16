@@ -1,6 +1,11 @@
 from logging import DEBUG, INFO
-import extract_boolean, extract_data, extract_option
-import sheet_handler, scraper, summarize, log
+import extract_boolean
+import extract_data
+import extract_option
+import sheet_handler
+import scraper
+import summarize
+import log
 import functions_framework
 import yaml
 
@@ -8,34 +13,40 @@ import yaml
 logger = log.init(__name__, DEBUG)
 
 # メインプロセス
-def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> None:
+
+
+def main_process(sheet_url: str, target_row_idx: int, target_column_idx: int) -> None:
     # 入力情報をログ出力
-    logger.debug(log.format('入力情報', 'ターゲット行/列:{}/{}\nスプレッドシートURL:{}'.format(target_row_idx, target_column_idx, sheet_url)))
+    logger.debug(log.format(
+        '入力情報', 'ターゲット行/列:{}/{}\nスプレッドシートURL:{}'.format(target_row_idx, target_column_idx, sheet_url)))
     # スプシを取得
     spreadsheet = sheet_handler.Spreadsheet(sheet_url)
     # スプシ出力用の辞書
     outputs = {
-        'execute_button':'FALSE',
-        'execute_status':'',
-        'get_text':'',
-        'summary_text':'',
-        'extract_result':'',
+        'execute_button': 'FALSE',
+        'execute_status': '',
+        'get_text': '',
+        'summary_text': '',
+        'extract_result': '',
     }
 
     # マスタ情報を取得
     master_items = spreadsheet.get_master_items()
     if master_items == None:
         outputs['execute_status'] += 'マスタ情報の取得失敗\n'
-        status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
+        status = spreadsheet.set_outputs(
+            target_row_idx, target_column_idx, outputs)
         return
-    else: 
-        logger.debug(log.format('マスタ情報', '\n'.join([str(master_items[key]) for key in master_items.keys()])))
+    else:
+        logger.debug(log.format('マスタ情報', '\n'.join(
+            [str(master_items[key]) for key in master_items.keys()])))
 
     # 商品情報を取得
     product = spreadsheet.get_inputs(target_row_idx, target_column_idx)
     if product == None:
         outputs['execute_status'] += '商品情報の取得失敗\n'
-        status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
+        status = spreadsheet.set_outputs(
+            target_row_idx, target_column_idx, outputs)
         return
     else:
         logger.debug(log.format('商品情報', product))
@@ -47,7 +58,8 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
     if full_text == None:
         outputs['execute_status'] += '参照URLへのアクセス失敗\n'
         outputs['execute_status'] += scrape_status + '\n'
-        status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
+        status = spreadsheet.set_outputs(
+            target_row_idx, target_column_idx, outputs)
         return
     else:
         outputs['execute_status'] += scrape_status + '\n'
@@ -57,25 +69,32 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
     # 要約文から各項目を抽出
     answers = dict()
     raw_answers = dict()
-    answers['data'], raw_answers['data'] = extract_data.extract(input_text = full_text, product_name = product['name'], items = master_items['data'])
+    answers['data'], raw_answers['data'] = extract_data.extract(
+        input_text=full_text, product_name=product['name'], items=master_items['data'])
     logger.debug(log.format('データ項目の抽出結果', answers['data']))
-    answers['boolean'], raw_answers['boolean'] = extract_boolean.extract(input_text = full_text, product_name = product['name'], items = master_items['boolean'])
+    answers['boolean'], raw_answers['boolean'] = extract_boolean.extract(
+        input_text=full_text, product_name=product['name'], items=master_items['boolean'])
     logger.debug(log.format('Boolean項目の抽出結果', answers['boolean']))
-    answers['option'], raw_answers['option'] = extract_option.extract(input_text = full_text, product_name = product['name'], items = master_items['option'])
+    answers['option'], raw_answers['option'] = extract_option.extract(
+        input_text=full_text, product_name=product['name'], items=master_items['option'])
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
     outputs |= answers['data'] | answers['boolean'] | answers['option']
     outputs['extract_result'] += str(raw_answers)
 
     # 各回答を出力
     outputs['execute_status'] += '実行終了\n'
-    status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
-    if status == 'error': return
+    status = spreadsheet.set_outputs(
+        target_row_idx, target_column_idx, outputs)
+    if status == 'error':
+        return
 
     # 正常終了
     logger.info('正常終了')
     return
 
 # HTTPリクエスト時のプロセス
+
+
 @functions_framework.http
 def on_http_trigger(request) -> None:
     # 入力を取得
@@ -89,6 +108,8 @@ def on_http_trigger(request) -> None:
     return
 
 # ローカル実行時のプロセス
+
+
 def main() -> None:
     # テスト用のシートを指定
     with open('test_sheet.yml') as file:
@@ -101,6 +122,7 @@ def main() -> None:
         # メインプロセスを実行
         main_process(sheet_url, target_row_idx, target_column_idx)
     return
+
 
 if __name__ == "__main__":
     main()
