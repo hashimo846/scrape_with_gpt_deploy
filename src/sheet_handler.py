@@ -167,7 +167,11 @@ class Spreadsheet:
         items, i = [], 0
         while i < len(master['formats']):
             if master['formats'][i] == '二値':
-                items.append({'name':master['features'][i]})
+                items.append({
+                    'name':master['features'][i],
+                    'description': master['descriptions'][i],
+                    'unit': master['units'][i],
+                })
             i += 1
         return items
 
@@ -176,10 +180,12 @@ class Spreadsheet:
         items, i = [], 0
         while i < len(master['formats']):
             if master['formats'][i] in ['小数','整数','フリーワード']:
-                name = master['features'][i]
-                value_type = master['formats'][i]
-                unit = master['units'][i] if master['units'][i] != '' else None
-                items.append({'name':name, 'value_type':value_type, 'unit':unit})
+                items.append({
+                    'name': master['features'][i], 
+                    'value_type': master['formats'][i],
+                    'description': master['descriptions'][i],
+                    'unit': master['units'][i],
+                })
             i += 1
         return items
 
@@ -187,14 +193,20 @@ class Spreadsheet:
     def __get_option_items(self, master:Dict) -> List:
         items, i = [], 0
         while i < len(master['formats']):
+            count = 0
             if master['formats'][i] == '管理用の値':
-                name = master['features'][i]
                 options = [master['filters'][i]]
-                i += 1
-                while i < len(master['formats']) and master['features'][i] == '':
-                    options.append(master['filters'][i])
-                    i += 1
-                items.append({'name':name, 'options':options})
+                count += 1
+                while i + count < len(master['formats']) and master['features'][i + count] == '':
+                    options.append(master['filters'][i + count])
+                    count += 1
+                items.append({
+                    'name': master['features'][i], 
+                    'description': master['descriptions'][i],
+                    'unit': master['units'][i],
+                    'options': options,
+                })
+                i += count
             else:
                 i += 1
         return items

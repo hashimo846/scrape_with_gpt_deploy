@@ -29,7 +29,7 @@ def main_process(sheet_url:str, target_row_idx:int, target_column_idx:int) -> No
         status = spreadsheet.set_outputs(target_row_idx, target_column_idx, outputs)
         return
     else: 
-        logger.debug(log.format('マスタ情報', master_items))
+        logger.debug(log.format('マスタ情報', '\n'.join([str(master_items[key]) for key in master_items.keys()])))
 
     # 商品情報を取得
     product = spreadsheet.get_inputs(target_row_idx, target_column_idx)
