@@ -16,15 +16,28 @@ logger = log.init(__name__, DEBUG)
 
 
 def messages_question_prompt(input_text: str, product_name: str, items: List[Dict]) -> List[Dict]:
-    item_names = [item['name'] for item in items]
-    output_format = '{\"' + \
-        '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}'
-    system_message = 'You will be provided with extraction targets, an expected output format and an excerpt texts about the product {}. '.format(
-        product_name)
-    system_message += 'Your task is to extract information about the provided extraction targets in Japanese from only the provided excerpt texts. '
-    system_message += 'In addition, you MUST answer in JSON, the provided output format.'
-    user_message = 'Extraction Targets: {}\n\nOutput Format: {}\n\nExcerpt texts: {}'.format(
-        ', '.join(item_names), output_format, input_text)
+    system_message = (
+        'You will be provided with extraction targets, descriptions of targets, an expected output format and an excerpt texts about the product {product_name}. '
+        'Your task is to extract information about the provided extraction targets in Japanese from only the provided excerpt texts. '
+        'In addition, you MUST answer in JSON, the provided output format.'
+    ).format(
+        product_name=product_name
+    )
+
+    user_message = (
+        'Extraction Targets: {targets}\n\n'
+        'Descriptions: {descriptions}\n\n'
+        'Output Format: {output_format}\n\n'
+        'Excerpt texts: {input_text}'
+    ).format(
+        targets=', '.join([item['name'] for item in items]),
+        descriptions='\n' + '\n'.join(['- {name}: {description}'.format(
+            name=item['name'], description=item['description']) for item in items]),
+        output_format='{\"' +
+        '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}',
+        input_text=input_text
+    )
+
     messages = [
         {'role': 'system', 'content': system_message},
         {'role': 'user', 'content': user_message}
@@ -65,7 +78,8 @@ def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
     while item_idx < len(items):
         messages = messages_question_prompt(
             input_text, product_name, items[item_idx:item_idx+ITEM_LIMIT])
-        logger.debug(log.format('データ項目抽出プロンプト', messages))
+        logger.debug(log.format('データ項目抽出プロンプト', '\n'.join(['---[role: {role}]---\n{content}'.format(
+            role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
             messages, json_mode=True))
         item_idx += ITEM_LIMIT
