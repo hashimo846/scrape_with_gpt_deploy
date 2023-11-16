@@ -2,6 +2,7 @@ from logging import DEBUG, INFO
 import extract_boolean, extract_data, extract_option
 import sheet_handler, scraper, summarize, log
 import functions_framework
+import yaml
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
@@ -89,10 +90,13 @@ def on_http_trigger(request) -> None:
 
 # ローカル実行時のプロセス
 def main() -> None:
-    for target_row_idx in range(2, 12):
+    # テスト用のシートを指定
+    with open('test_sheet.yml') as file:
+        test_sheet = yaml.safe_load(file)
+    # シートの各行を処理
+    for target_row_idx in range(test_sheet['start_row'], test_sheet['end_row']):
         # 入力を取得
-        sheet_url = 'https://docs.google.com/spreadsheets/d/15Y3Vmya-7AKM-lGJb4pYjhspkZYXsC06TlVZRgQcf_0/edit?usp=sharing'
-        # target_row_idx = 2
+        sheet_url = test_sheet['url']
         target_column_idx = 5
         # メインプロセスを実行
         main_process(sheet_url, target_row_idx, target_column_idx)
