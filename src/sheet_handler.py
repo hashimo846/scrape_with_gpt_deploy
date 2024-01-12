@@ -36,6 +36,14 @@ class Spreadsheet:
         '要約文': 'summary_text',
         '抽出結果': 'extract_result',
     }
+    MASTER_COLUMNS_KEY = {
+        '項目/Feature': 'features',
+        '説明/Description': 'descriptions',
+        'リサーチャー向け説明/Description for researcher': 'research_descriptions',
+        '形式/Format': 'formats',
+        '単位/Units': 'units',
+        '検索フィルタ名/Filter': 'filters',
+    }
     # クラス内で保持する変数
     spreadsheet = None
     master_worksheet = None
@@ -72,6 +80,10 @@ class Spreadsheet:
         try:
             # get master data from spreadsheet
             master = self.__get_master()
+        except Exception as e:
+            logger.error(log.format('マスタ情報取得失敗', e))
+            return None
+        try:
             # get each items
             boolean_items = self.__get_boolean_items(master)
             data_items = self.__get_data_items(master)
@@ -84,7 +96,7 @@ class Spreadsheet:
             }
             return master_items
         except Exception as e:
-            logger.error(log.format('マスタ情報取得失敗', e))
+            logger.error(log.format('マスタ情報解析失敗', e))
             return None
 
     # スプシの入力部分を取得（JANから参照URLまでのカラム）
@@ -147,7 +159,7 @@ class Spreadsheet:
             target_row_idx+1, target_column_idx+len(target_range))
         self.product_worksheet.update('{}:{}'.format(start_cell, end_cell), [
                                       target_range], value_input_option='USER_ENTERED')
-        '''spreadのバージョン6になると、引数の順番が逆になる
+        '''gspreadのバージョン6になると、引数の順番が逆になる
         UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
         '''
 
@@ -156,13 +168,11 @@ class Spreadsheet:
         # get master table
         logger.info(log.format('スプレッドシートからマスタ情報取得中'))
         # get each column
-        master = {
-            'features': self. __get_column(self.master_table, 0),
-            'descriptions': self.__get_column(self.master_table, 1),
-            'formats': self.__get_column(self.master_table, 2),
-            'units': self.__get_column(self.master_table, 3),
-            'filters': self.__get_column(self.master_table, 4),
-        }
+        master = dict()
+        for column_idx, column_name in enumerate(self.master_table[0]):
+            if column_name in list(self.MASTER_COLUMNS_KEY.keys()):
+                master[self.MASTER_COLUMNS_KEY[column_name]
+                       ] = self.__get_column(self.master_table, column_idx)
         return master
 
     # 指定した列の全データをテーブルから取得
@@ -177,6 +187,7 @@ class Spreadsheet:
                 items.append({
                     'name': master['features'][i],
                     'description': master['descriptions'][i],
+                    'research_description': master['research_descriptions'][i],
                     'unit': master['units'][i],
                 })
             i += 1
@@ -191,6 +202,7 @@ class Spreadsheet:
                     'name': master['features'][i],
                     'value_type': master['formats'][i],
                     'description': master['descriptions'][i],
+                    'research_description': master['research_descriptions'][i],
                     'unit': master['units'][i],
                 })
             i += 1
@@ -210,6 +222,7 @@ class Spreadsheet:
                 items.append({
                     'name': master['features'][i],
                     'description': master['descriptions'][i],
+                    'research_description': master['research_descriptions'][i],
                     'unit': master['units'][i],
                     'options': options,
                 })
