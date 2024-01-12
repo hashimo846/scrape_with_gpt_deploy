@@ -29,7 +29,8 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
         'Excerpt texts: {input_text}'
     ).format(
         target=item['name'],
-        description=item['description'],
+        description='\n'.join(
+            [item['description'], item['research_description']]),
         output_format='{\"' + 'output' + '\":\"\"}',
         input_text=input_text
     )

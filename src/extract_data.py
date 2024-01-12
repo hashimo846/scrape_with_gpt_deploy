@@ -31,8 +31,8 @@ def messages_question_prompt(input_text: str, product_name: str, items: List[Dic
         'Excerpt texts: {input_text}'
     ).format(
         targets=', '.join([item['name'] for item in items]),
-        descriptions='\n' + '\n'.join(['- {name}: {description}'.format(
-            name=item['name'], description=item['description']) for item in items]),
+        descriptions='\n' + '\n'.join(['- {name}: {description} {research_description}'.format(
+            name=item['name'], description=item['description'], research_description=item['research_description']) for item in items]),
         output_format='{\"' +
         '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}',
         input_text=input_text
