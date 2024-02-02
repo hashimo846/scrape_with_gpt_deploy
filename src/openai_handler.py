@@ -20,8 +20,6 @@ client = openai.Client()
 RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
 
 # メッセージ群を送信して回答を取得
-
-
 def send_messages(messages: List, json_mode=False) -> str:
     while True:
         try:
@@ -46,3 +44,27 @@ def send_messages(messages: List, json_mode=False) -> str:
         'レスポンス', 'RESPONSE: {}'.format(response.usage)))
 
     return response.choices[0].message.content.strip()
+
+if __name__ == "__main__":
+    # メッセージ群を送信して回答を取得
+    messages = [
+        {
+            "role": "system",
+            "content": (
+              'You wil be provided with an extraction target,target descriptions and the output format. '
+              'Your task is to research the extraction target about the product {} from web sites. '
+              'Output the research result and the URL of the web site you referred to. '
+              'In addition, you MUST answer in JSON, the provided output format.'
+            ).format('EOS R10')
+        },
+        {
+            "role": "user",
+            "content": (
+              'Extraction target: ファインダー形式\n'
+              'Target descriptions: ここでのファイダー形式とは「カメラに搭載されているファインダーの種類」を指します。電子式（EVF）の場合は「電子ビューファインダー（EVF）」としてください。'
+              'Output format: {\"ファインダー形式\":\"\", \"URL\":[\"\"]}'
+            )
+        }
+    ]
+    response = send_messages(messages, json_mode=True)
+    print(response)

@@ -88,9 +88,9 @@ def scrape_all(url_list: List[str] = ['']) -> str:
             text = webpage_parser.parse_text(source)
         # テキストが取得できなかった場合はスキップ
         if text == None:
-            status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得失敗')
+            status.append('{}[URL{}:type={}] '.format('取得失敗', idx+1, domain) + url)
         else:
-            status.append('[URL{}:type={}] '.format(idx+1, domain)+'取得成功')
+            status.append('{}[URL{}:type={}] '.format('取得成功', idx+1, domain) + url)
             texts.append(text)
     # テキストを結合して返す
     if len(texts) == 0:

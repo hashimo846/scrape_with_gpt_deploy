@@ -53,6 +53,7 @@ def main_process(sheet_url: str, target_row_idx: int, target_column_idx: int) ->
 
     # URLからページの全文を取得
     url_list = product['reference_url'].split('\n')
+    url_list = [url for url in url_list if url != '']
     logger.debug(log.format('WebページのURL', url_list))
     full_text, scrape_status = scraper.scrape_all(url_list)
     if full_text == None:
