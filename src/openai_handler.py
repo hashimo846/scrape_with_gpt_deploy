@@ -48,23 +48,28 @@ def send_messages(messages: List, json_mode=False) -> str:
 if __name__ == "__main__":
     # メッセージ群を送信して回答を取得
     messages = [
-        {
-            "role": "system",
-            "content": (
-              'You wil be provided with an extraction target,target descriptions and the output format. '
-              'Your task is to research the extraction target about the product {} from web sites. '
-              'Output the research result and the URL of the web site you referred to. '
-              'In addition, you MUST answer in JSON, the provided output format.'
-            ).format('EOS R10')
-        },
-        {
-            "role": "user",
-            "content": (
-              'Extraction target: ファインダー形式\n'
-              'Target descriptions: ここでのファイダー形式とは「カメラに搭載されているファインダーの種類」を指します。電子式（EVF）の場合は「電子ビューファインダー（EVF）」としてください。'
-              'Output format: {\"ファインダー形式\":\"\", \"URL\":[\"\"]}'
-            )
-        }
+     {
+        "role": "system",
+        "content": (
+          'You wil be provided with an extraction target, target descriptions and the output format. '
+          'Your task is to research about the product the product {product_name} made by {manufacture_name} with online web sites and extract the information of the target. '
+          'Output the result and the URL of the web sites you referred to in Japanese. '
+          'In addition, you MUST answer in JSON, the provided output format.'
+        ).format(
+          product_name = 'EOS R10', manufacture_name = 'Canon'
+        )
+      },
+      {
+        "role": "user",
+        "content": (
+          'Extraction target: {item_name}\n'
+          'Target descriptions: {item_description}\n'
+          'Output format: {\"item_name\":\"\", \"URL\":[\"\"]}'
+        ).format(
+          item_name = 'ファインダー形式',
+          item_description = 'ここでのファイダー形式とは「カメラに搭載されているファインダーの種類」を指します。電子式（EVF）の場合は「電子ビューファインダー（EVF）」としてください。'
+        )
+      }
     ]
     response = send_messages(messages, json_mode=True)
     print(response)
