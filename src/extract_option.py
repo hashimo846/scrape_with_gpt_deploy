@@ -10,30 +10,29 @@ from typing import List, Dict
 logger = log.init(__name__, DEBUG)
 
 # プロンプトを生成
-
-
-def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> List[Dict]:
+def messages_question_prompt(product: Dict, item: Dict) -> List[Dict]:
     system_message = (
-        'You will be provided with a key word, a description of key word, available options, an expected output format and excerpt texts about the product {product_name}. '
-        'Your task is to refer to only the provided ecerpt texts, then select appropriate options for the key word from only the provided options. '
-        'If there is no appropriate option, output empty string (""). '
-        'In addition, you MUST answer in JSON, the provided output format. '
-        'Do NOT output anything that is not included in the provided options.'
-    ).format(product_name=product_name)
+        'You wil be provided with an extraction target, a target description, available options and an output format. '
+        'Your task is to select the appropriate options for the provided target from an online website about the product {product_name} made by {product_maker}. '
+        'Output the answer and the URL of the referenced website. If the answer is not sure, output an empty string. '
+        'Do NOT output anything that is not included in the provided options. '
+        'You MUST answer in JSON, the provided output format.'
+    ).format(
+      product_name = product['name'],
+      product_maker = product['maker']
+    )
 
     user_message = (
-        'Key Word: {keyword}\n\n'
+        'Extraction Target: {keyword}\n\n'
         'Description: {description}\n\n'
         'Options: {options}\n\n'
-        'Output Format: {output_format}\n\n'
-        'Excerpt texts: {input_text}'
+        'Output Format: {output_format}'
     ).format(
         keyword=item['name'],
-        description='\n'.join(
+        description = '\n'.join(
             [item['description'], item['research_description']]),
-        options=', '.join(item['options']),
-        output_format='{\"' + item['name'] + '\":[\"\", \"\"]}',
-        input_text=input_text
+        options = ', '.join(item['options']),
+        output_format = '{\"' + item['name'] + '\":[\"\", \"\"], \"URL\":[\"\"]}'
     )
 
     messages = [
@@ -82,10 +81,10 @@ def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
 # 対象項目の情報を抽出
 
 
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(product: Dict, items: List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
-        messages = messages_question_prompt(input_text, product_name, item)
+        messages = messages_question_prompt(product, item)
         logger.debug(log.format('選択項目抽出プロンプト', '\n'.join(['---[role: {role}]---\n{content}'.format(
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(

@@ -13,8 +13,6 @@ import yaml
 logger = log.init(__name__, DEBUG)
 
 # メインプロセス
-
-
 def main_process(sheet_url: str, target_row_idx: int, target_column_idx: int) -> None:
     # 入力情報をログ出力
     logger.debug(log.format(
@@ -51,33 +49,17 @@ def main_process(sheet_url: str, target_row_idx: int, target_column_idx: int) ->
     else:
         logger.debug(log.format('商品情報', product))
 
-    # URLからページの全文を取得
-    url_list = product['reference_url'].split('\n')
-    url_list = [url for url in url_list if url != '']
-    logger.debug(log.format('WebページのURL', url_list))
-    full_text, scrape_status = scraper.scrape_all(url_list)
-    if full_text == None:
-        outputs['execute_status'] += '参照URLへのアクセス失敗\n'
-        outputs['execute_status'] += scrape_status + '\n'
-        status = spreadsheet.set_outputs(
-            target_row_idx, target_column_idx, outputs)
-        return
-    else:
-        outputs['execute_status'] += scrape_status + '\n'
-        outputs['get_text'] = full_text
-        logger.debug(log.format('Webページから取得した全文', full_text))
-
     # 要約文から各項目を抽出
     answers = dict()
     raw_answers = dict()
     answers['data'], raw_answers['data'] = extract_data.extract(
-        input_text=full_text, product_name=product['name'], items=master_items['data'])
+        product, master_items['data'])
     logger.debug(log.format('データ項目の抽出結果', answers['data']))
     answers['boolean'], raw_answers['boolean'] = extract_boolean.extract(
-        input_text=full_text, product_name=product['name'], items=master_items['boolean'])
+        product, master_items['boolean'])
     logger.debug(log.format('Boolean項目の抽出結果', answers['boolean']))
     answers['option'], raw_answers['option'] = extract_option.extract(
-        input_text=full_text, product_name=product['name'], items=master_items['option'])
+        product, master_items['option'])
     logger.debug(log.format('複数選択項目の抽出結果', answers['option']))
     outputs |= answers['data'] | answers['boolean'] | answers['option']
     outputs['extract_result'] += str(raw_answers)
@@ -94,8 +76,6 @@ def main_process(sheet_url: str, target_row_idx: int, target_column_idx: int) ->
     return
 
 # HTTPリクエスト時のプロセス
-
-
 @functions_framework.http
 def on_http_trigger(request) -> None:
     # 入力を取得

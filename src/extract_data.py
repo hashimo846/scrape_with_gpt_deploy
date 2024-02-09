@@ -6,53 +6,47 @@ import log
 from typing import List, Dict
 import json
 
-# 1プロンプトあたりの抽出項目数
-ITEM_LIMIT = 4
-
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 # プロンプトを生成
-
-
-def messages_question_prompt(input_text: str, product_name: str, items: List[Dict]) -> List[Dict]:
+def messages_question_prompt(product: Dict, item: Dict, language = 'Japanese') -> List[Dict]:
     system_message = (
-        'You will be provided with extraction targets, descriptions of targets, an expected output format and an excerpt texts about the product {product_name}. '
-        'Your task is to extract information about the provided extraction targets in Japanese from only the provided excerpt texts. '
-        'In addition, you MUST answer in JSON, the provided output format.'
+        'You will be provided with an extraction target, a target description and an output format. '
+        'Your task is to refer to the websites about a product {product_name} made by {product_maker} and extract the provided target. '
+        'Please output the answer and the URL of the referenced website. '
+        'If there is no information about the target on the referenced website, output the empty string ("") for the answer. '
+        'You MUST answer in JSON, the provided output format. '
     ).format(
-        product_name=product_name
+        product_name=product['name'],
+        product_maker=product['maker']
     )
 
     user_message = (
-        'Extraction Targets: {targets}\n\n'
-        'Descriptions: {descriptions}\n\n'
-        'Output Format: {output_format}\n\n'
-        'Excerpt texts: {input_text}'
+        'Extraction Target: {target}\n\n'
+        'Target Description: {description}\n\n'
+        'Output Format: {output_format}'
     ).format(
-        targets=', '.join([item['name'] for item in items]),
-        descriptions='\n' + '\n'.join(['- {name}: {description} {research_description}'.format(
-            name=item['name'], description=item['description'], research_description=item['research_description']) for item in items]),
-        output_format='{\"' +
-        '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}',
-        input_text=input_text
+        target = item['name'],
+        description = '\n'.join(
+            [item['description'], item['research_description']]),
+        output_format = '{\"' + item['name'] + '\":\"\", \"URL\":[\"\"]}',
     )
 
     messages = [
-        {'role': 'system', 'content': system_message},
-        {'role': 'user', 'content': user_message}
+        {'role': 'system', 'content': system_message + '\n\n' + user_message}
+        # {'role': 'user', 'content': user_message}
     ]
     return messages
 
 # 回答をパース
-
-
-def parse_answers(items: List[str], answers: List[str]) -> List[Dict]:
+def parse_answers(items: Dict, answers: List[str]) -> List[Dict]:
     all_dict = dict()
     for answer in answers:
         json_str = extract_json(answer)
         try:
             json_dict = json.loads(json_str)
+            json_dict.pop('URL', None)
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
             logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answer))
@@ -70,18 +64,14 @@ def parse_answers(items: List[str], answers: List[str]) -> List[Dict]:
     return answers_dict
 
 # 対象項目の情報を抽出
-
-
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(product: Dict, items: List[Dict]) -> List[str]:
     raw_answers = []
-    item_idx = 0
-    while item_idx < len(items):
+    for item in items:
         messages = messages_question_prompt(
-            input_text, product_name, items[item_idx:item_idx+ITEM_LIMIT])
+            product, item)
         logger.debug(log.format('データ項目抽出プロンプト', '\n'.join(['---[role: {role}]---\n{content}'.format(
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
             messages, json_mode=True))
-        item_idx += ITEM_LIMIT
     answers = parse_answers(items, raw_answers)
     return answers, ', '.join(raw_answers)

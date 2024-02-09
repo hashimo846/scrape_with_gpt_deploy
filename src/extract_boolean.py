@@ -10,29 +10,27 @@ from typing import List, Dict
 logger = log.init(__name__, DEBUG)
 
 # プロンプトの生成
-
-
-def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> List[Dict]:
+def messages_question_prompt(product: Dict, item: Dict) -> List[Dict]:
     system_message = (
-        'You will be provided with a check item, an item description, an expected output format and an excerpt texts about the product {product_name}. '
-        'Your task is to refer to only the provided excerpt texts, then find out if the product meets the provided check item. '
-        'Output \"True\" if the product meets the check item, \"False\" if not, or an empty string if it is impossible to find out it from only the provided excerpt texts. '
-        'In addition, you MUST answer in JSON, the provided output format.'
+        'You wil be provided with an check target, a target description and an output format. '
+        'Your task is to extract the provided target information from an online website about a product {product_name} made by {product_maker}. '
+        'Output the answer, \"True\" if the product meets the check target, \"False\" if not, or an empty string if it is not sure. '
+        'In addition, please output the URL of the referenced website. '
+        'You MUST answer in JSON, the provided output format.'
     ).format(
-        product_name=product_name
+        product_name = product['name'], 
+        product_maker = product['maker']
     )
 
     user_message = (
-        'Check Item: {target}\n\n'
-        'Item Description: {description}\n\n'
-        'Output Format: {output_format}\n\n'
-        'Excerpt texts: {input_text}'
+        'Check Target: {target}\n\n'
+        'Description: {description}\n\n'
+        'Output Format: {output_format}'
     ).format(
-        target=item['name'],
-        description='\n'.join(
+        target = item['name'],
+        description = '\n'.join(
             [item['description'], item['research_description']]),
-        output_format='{\"' + 'output' + '\":\"\"}',
-        input_text=input_text
+        output_format = '{\"answer\":\"\", \"URL\":[\"\"]}',
     )
 
     messages = [
@@ -42,8 +40,6 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
     return messages
 
 # 回答をパース
-
-
 def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
     answers_dict = dict()
     for i in range(len(items)):
@@ -54,22 +50,20 @@ def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
             logger.warning(log.format('JSON形式で出力されていません', e))
             logger.warning(log.format(
                 '回答が読み取れないため空の値とします', '回答：' + answers[i]))
-            json_dict = {'output': ''}
-        if json_dict['output'] == 'True':
+            json_dict = {'answer': ''}
+        if json_dict['answer'] == 'True':
             answers_dict[items[i]['name']] = True
-        elif json_dict['output'] == 'False':
+        elif json_dict['answer'] == 'False':
             answers_dict[items[i]['name']] = False
         else:
             answers_dict[items[i]['name']] = ''
     return answers_dict
 
 # 対象項目の情報を抽出
-
-
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(product: Dict, items: List[Dict]) -> List[str]:
     raw_answers = []
     for item in items:
-        messages = messages_question_prompt(input_text, product_name, item)
+        messages = messages_question_prompt(product, item)
         logger.debug(log.format('二値項目抽出プロンプト', '\n'.join(['---[role: {role}]---\n{content}'.format(
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
