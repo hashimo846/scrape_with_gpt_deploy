@@ -7,6 +7,7 @@ import os
 import log
 from time import sleep
 from typing import Dict, List, Tuple
+import yaml
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
@@ -15,23 +16,21 @@ logger = log.init(__name__, DEBUG)
 GOOGLE_CREDENTIAL_PATH = os.getenv('GOOGLE_CREDENTIAL_PATH')
 
 # スプレッドシートのインスタンスを保持して扱うクラス
-
-
 class Spreadsheet:
     # ワークシート名
     MASTER_WORKSHEET_NAME = '項目_詳細情報'
-    PRODUCT_WORKSHHET_NAME = '商品_詳細情報'
+    PRODUCT_WORKSHHET_NAME = 'リサーチシート'
     # スプシ上の固定カラム
     INPUT_COLUMNS_KEY = {
-        'JAN(変更不可)': 'jan',
-        '商品ID(変更不可)': 'id',
-        'メーカー名(変更不可)': 'maker',
-        '商品名(変更不可)': 'name',
+        'JAN': 'jan',
+        '商品ID': 'id',
+        'メーカー名': 'maker',
+        '商品名': 'name',
         '参照URL(編集可能)': 'reference_url',
     }
     FEEDBACK_COLUMNS_KEY = {
-        '実行ボタン': 'execute_button',
-        '実行ステータス': 'execute_status',
+        '実行': 'execute_button',
+        '実行終了ログ': 'execute_status',
         '取得文': 'get_text',
         '要約文': 'summary_text',
         '抽出結果': 'extract_result',
@@ -157,11 +156,7 @@ class Spreadsheet:
             target_row_idx+1, target_column_idx+1)
         end_cell = gspread.utils.rowcol_to_a1(
             target_row_idx+1, target_column_idx+len(target_range))
-        self.product_worksheet.update('{}:{}'.format(start_cell, end_cell), [
-                                      target_range], value_input_option='USER_ENTERED')
-        '''gspreadのバージョン6になると、引数の順番が逆になる
-        UserWarning: [Deprecated][in version 6.0.0]: method signature will change to: 'Worksheet.update(value = [[]], range_name=)' arguments 'range_name' and 'values' will swap, values will be mandatory of type: 'list(list(...))'
-        '''
+        self.product_worksheet.update([target_range], '{}:{}'.format(start_cell, end_cell), value_input_option='USER_ENTERED')
 
     # マスター情報を取得
     def __get_master(self) -> Dict:
@@ -244,19 +239,19 @@ class Spreadsheet:
         return gspread_client
 
 # ローカル実行時のプロセス
-
-
 def main():
-    sheet_url = 'https://docs.google.com/spreadsheets/d/10Y1f2RzKXiSl-PXa-MEhPPxdm2cdPELVwfJ7miIxuzU/edit?usp=sharing'
+    # テスト用のシートを指定
+    with open('test_sheet.yml') as file:
+        test_sheet = yaml.safe_load(file)
+    sheet_url = test_sheet['url']
     spreadsheet = Spreadsheet(sheet_url)
+    logger.debug(log.format('マスタ', spreadsheet.get_master_items()))
     logger.debug(log.format('入力', spreadsheet.get_inputs(2, 5)))
-    logger.debug(log.format('マスター', spreadsheet.get_master_items()))
     output = spreadsheet.get_outputs(2, 5)
     logger.debug(log.format('出力部分', output))
     output['execute_status'] = 'ok'
     output['execute_button'] = 'TRUE'
     spreadsheet.set_outputs(2, 5, output)
-
 
 if __name__ == '__main__':
     main()
