@@ -1,4 +1,3 @@
-from langchain.text_splitter import TokenTextSplitter
 from extract_json import extract_json
 from logging import DEBUG, INFO
 import openai_handler
@@ -9,10 +8,9 @@ import json
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# プロンプトを生成
-
 
 def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> List[Dict]:
+    """ プロンプトを生成 """
     system_message = (
         'You will be provided with an extraction target, descriptions of target, an expected output format and an excerpt texts about the product {product_name}. '
         'Your task is to extract information about the provided extraction target in Japanese from only the provided excerpt texts. '
@@ -20,11 +18,9 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
     ).format(
         product_name=product_name
     )
-
     if item['value_type'] != 'text':
         system_message += 'Use \"' + \
             item['unit'] + '\" as the unit and output only the value.'
-
     user_message = (
         'Extraction Target: {target}\n\n'
         'Descriptions: {descriptions}\n\n'
@@ -36,18 +32,15 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
         output_format='{\"' + item['name'] + '\":\"\"}',
         input_text=input_text
     )
-
     messages = [
         {'role': 'system', 'content': system_message},
         {'role': 'user', 'content': user_message}
     ]
     return messages
 
-# 回答をパース
-
 
 def parse_answers(items: List[Dict], raw_answers: List[str], output_suffixes: Dict) -> List[Dict]:
-    # JSON形式で出力された回答のみを抽出
+    """ 回答をパース """
     all_dict = dict()
     for raw_answer in raw_answers:
         json_str = extract_json(raw_answer)
@@ -89,10 +82,9 @@ def parse_answers(items: List[Dict], raw_answers: List[str], output_suffixes: Di
             answers[item['name']+output_suffixes['for_display']] = ''
     return answers
 
-# 対象項目の情報を抽出
-
 
 def extract(input_text: str, product_name: str, items: List[Dict], output_suffixes: Dict) -> List[str]:
+    """ 対象項目の情報を抽出 """
     raw_answers = []
     for item in items:
         messages = messages_question_prompt(input_text, product_name, item)

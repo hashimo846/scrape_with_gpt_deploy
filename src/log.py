@@ -2,7 +2,6 @@ from logging import getLogger, StreamHandler, Formatter, Logger, DEBUG, INFO
 
 
 def init(name: str, level: int) -> Logger:
-    # ロガーの初期化
     logger = getLogger(name)
     formatter = Formatter('#%(levelname)s:%(message)s')
     streamhandler = StreamHandler()

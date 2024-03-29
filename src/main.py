@@ -4,7 +4,6 @@ import extract_data
 import extract_option
 import sheet_handler
 import scraper
-import summarize
 import log
 import functions_framework
 import yaml

@@ -1,11 +1,8 @@
 from google.oauth2 import service_account
-import google.auth.exceptions
 import gspread
-import json
 from logging import DEBUG, INFO
 import os
 import log
-from time import sleep
 from typing import Dict, List, Tuple
 import yaml
 
