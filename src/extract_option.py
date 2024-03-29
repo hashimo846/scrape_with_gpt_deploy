@@ -45,9 +45,10 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
 # 回答をパース
 
 
-def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
+def parse_answers(items: List[Dict], answers: List[str], output_suffixes: Dict) -> List[Dict]:
     answers_dict = dict()
     item_names = [item['name'] for item in items]
+    logger.debug(log.format('あああ', answers))
     for i in range(len(items)):
         json_str = extract_json(answers[i])
         try:
@@ -57,32 +58,41 @@ def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
             logger.warning(log.format(
                 '回答が読み取れないため空の値とします', '回答：' + answers[i]))
             json_dict = {'': ''}
-        key_list = list(json_dict.keys())
-        if len(key_list) == 0:
-            continue
+        answer_key = list(json_dict.keys())[0]
         # 有効な項目名のみ抽出
-        if key_list[0] in item_names:
+        if answer_key in item_names:
             valid_answers = []
             # 有効な選択肢のみ抽出
             try:
-                for option in json_dict[key_list[0]]:
+                for option in json_dict[answer_key]:
                     if option in items[i]['options']:
                         valid_answers.append(option)
                     elif option == '':
                         continue
                     else:
                         logger.debug(log.format('選択肢にないものが含まれています', str(
-                            key_list[0]) + ':' + str(option)))
+                            answer_key) + ':' + str(option)))
             except Exception as e:
                 logger.warning(log.format('項目が抽出できませんでした', e))
                 continue
-            answers_dict[key_list[0]] = ', '.join(valid_answers)
+            if 0 < len(valid_answers):
+                answers_dict[answer_key +
+                             output_suffixes['value_existence']] = 'あり'
+                answers_dict[answer_key + output_suffixes['for_search']] = '、'.join(
+                    valid_answers)
+                answers_dict[answer_key + output_suffixes['for_display']] = '、'.join(
+                    valid_answers)
+            else:
+                answers_dict[answer_key +
+                             output_suffixes['value_existence']] = '不明'
+                answers_dict[answer_key + output_suffixes['for_search']] = ''
+                answers_dict[answer_key + output_suffixes['for_display']] = ''
     return answers_dict
 
 # 対象項目の情報を抽出
 
 
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(input_text: str, product_name: str, items: List[Dict], output_suffixes: Dict) -> List[str]:
     raw_answers = []
     for item in items:
         messages = messages_question_prompt(input_text, product_name, item)
@@ -90,5 +100,5 @@ def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
             messages, json_mode=True))
-    answers = parse_answers(items, raw_answers)
+    answers = parse_answers(items, raw_answers, output_suffixes)
     return answers, ', '.join(raw_answers)

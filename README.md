@@ -9,7 +9,7 @@
 3. GCP の設定にて、ランタイムを`Python3.9`、エントリポイントを`on_http_trigger`に設定
 4. 次を実行して`deploy.zip`を生成（-j オプションは src 配下のファイルを同一ディレクトリに展開するため）
    ```shell
-   zip -j deploy src/*.py google_service_account.json requirements.txt
+   zip -j deploy src/*.py google_service_account.json requirements.txt sheet_info.yml
    ```
 5. `deploy.zip`を Cloud Functions にアップロードしてデプロイ
 
@@ -35,7 +35,7 @@ docker-compose exec python3 python3 src/main.py
 
 ### コンテナ再構築
 
-`requirements.txt`、`.env`、`Dockerfile`、`docker-compose.yml`を変更したときは、次のコマンドにより
+`requirements.txt`、`.env`、`Dockerfile`、`docker-compose.yml`を変更したときは、次のコマンドによりコンテナを再構築する。
 
 ```shell
 docker-compose down

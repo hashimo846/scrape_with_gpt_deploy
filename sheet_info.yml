@@ -1,0 +1,50 @@
+# アドミンからカテゴリ項目情報をエクスポートしたシート
+master:
+  name: "項目_詳細情報"
+  header_row: 1
+  header_columns:
+    features: "項目/Feature"
+    descriptions: "説明/Description"
+    research_descriptions: "リサーチャー向け説明/Description for researcher"
+    formats: "形式/Format"
+    units: "単位/Units"
+    filters: "検索フィルタ名/Filter"
+  data_types:
+    text: "フリーワード"
+    integer: "整数"
+    float: "小数"
+    option: "管理用の値"
+    boolean: "二値"
+
+# リサーチAI動作用シート
+research:
+  name: "リサーチAI"
+  header_row: 1
+  # 入力元となる列
+  input_columns:
+    id: "商品ID"
+    jan: "JAN"
+    maker: "メーカー名\nManufacturer"
+    name: "商品名\nProduct name"
+    model_number: "型番\nModel number"
+    reference_url: "参照URL\n(編集可能)"
+  # 出力先となる列
+  output_columns:
+    execute_button: "実行"
+    execute_status: "実行終了ログ"
+    get_text: "取得文"
+    summary_text: "要約文"
+    extract_result: "抽出結果"
+
+# リサーチAI出力用シート
+output:
+  name: "商品_詳細情報"
+  header_row: 1
+  header_columns:
+    id: "商品ID(変更不可)"
+    name: "商品名(変更不可)"
+  output_start_column: 3
+  output_header_suffixes:
+    value_existence: ":値の有無"
+    for_search: ":検索用"
+    for_display: ":表示用"

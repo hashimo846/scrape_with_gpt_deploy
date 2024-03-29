@@ -5,6 +5,7 @@ from logging import DEBUG, INFO
 import openai_handler
 import log
 from typing import List, Dict
+import yaml
 
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
@@ -44,29 +45,38 @@ def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> 
 # 回答をパース
 
 
-def parse_answers(items: List[Dict], answers: List[str]) -> List[Dict]:
-    answers_dict = dict()
+def parse_answers(items: List[Dict], raw_answers: List[str], output_suffixes: Dict) -> List[Dict]:
+    answers = dict()
     for i in range(len(items)):
-        json_str = extract_json(answers[i])
+        json_str = extract_json(raw_answers[i])
         try:
             json_dict = json.loads(json_str)
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
             logger.warning(log.format(
-                '回答が読み取れないため空の値とします', '回答：' + answers[i]))
+                '回答が読み取れないため空の値とします', '回答：' + raw_answers[i]))
             json_dict = {'output': ''}
         if json_dict['output'] == 'True':
-            answers_dict[items[i]['name']] = True
+            answers[items[i]['name'] +
+                    output_suffixes['value_existence']] = 'あり'
+            answers[items[i]['name'] + output_suffixes['for_search']] = '1'
+            answers[items[i]['name'] + output_suffixes['for_display']] = '✓'
         elif json_dict['output'] == 'False':
-            answers_dict[items[i]['name']] = False
+            answers[items[i]['name'] +
+                    output_suffixes['value_existence']] = 'あり'
+            answers[items[i]['name'] + output_suffixes['for_search']] = '0'
+            answers[items[i]['name'] + output_suffixes['for_display']] = '×'
         else:
-            answers_dict[items[i]['name']] = ''
-    return answers_dict
+            answers[items[i]['name'] +
+                    output_suffixes['value_existence']] = '不明'
+            answers[items[i]['name'] + output_suffixes['for_search']] = ''
+            answers[items[i]['name'] + output_suffixes['for_display']] = ''
+    return answers
 
 # 対象項目の情報を抽出
 
 
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(input_text: str, product_name: str, items: List[Dict], output_suffixes: Dict) -> List[str]:
     raw_answers = []
     for item in items:
         messages = messages_question_prompt(input_text, product_name, item)
@@ -74,5 +84,5 @@ def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
             messages, json_mode=True))
-    answers = parse_answers(items, raw_answers)
+    answers = parse_answers(items, raw_answers, output_suffixes)
     return answers, ', '.join(raw_answers)

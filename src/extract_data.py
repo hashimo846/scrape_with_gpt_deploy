@@ -6,35 +6,34 @@ import log
 from typing import List, Dict
 import json
 
-# 1プロンプトあたりの抽出項目数
-ITEM_LIMIT = 4
-
 # ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 # プロンプトを生成
 
 
-def messages_question_prompt(input_text: str, product_name: str, items: List[Dict]) -> List[Dict]:
+def messages_question_prompt(input_text: str, product_name: str, item: Dict) -> List[Dict]:
     system_message = (
-        'You will be provided with extraction targets, descriptions of targets, an expected output format and an excerpt texts about the product {product_name}. '
-        'Your task is to extract information about the provided extraction targets in Japanese from only the provided excerpt texts. '
-        'In addition, you MUST answer in JSON, the provided output format.'
+        'You will be provided with an extraction target, descriptions of target, an expected output format and an excerpt texts about the product {product_name}. '
+        'Your task is to extract information about the provided extraction target in Japanese from only the provided excerpt texts. '
+        'In addition, you MUST answer in JSON, the provided output format. '
     ).format(
         product_name=product_name
     )
 
+    if item['value_type'] != 'text':
+        system_message += 'Use \"' + \
+            item['unit'] + '\" as the unit and output only the value.'
+
     user_message = (
-        'Extraction Targets: {targets}\n\n'
+        'Extraction Target: {target}\n\n'
         'Descriptions: {descriptions}\n\n'
         'Output Format: {output_format}\n\n'
         'Excerpt texts: {input_text}'
     ).format(
-        targets=', '.join([item['name'] for item in items]),
-        descriptions='\n' + '\n'.join(['- {name}: {description} {research_description}'.format(
-            name=item['name'], description=item['description'], research_description=item['research_description']) for item in items]),
-        output_format='{\"' +
-        '\":\"\", \"'.join([item['name'] for item in items]) + '\":\"\"}',
+        target=item['name'],
+        descriptions=item['description'] + ' ' + item['research_description'],
+        output_format='{\"' + item['name'] + '\":\"\"}',
         input_text=input_text
     )
 
@@ -47,41 +46,59 @@ def messages_question_prompt(input_text: str, product_name: str, items: List[Dic
 # 回答をパース
 
 
-def parse_answers(items: List[str], answers: List[str]) -> List[Dict]:
+def parse_answers(items: List[Dict], raw_answers: List[str], output_suffixes: Dict) -> List[Dict]:
+    # JSON形式で出力された回答のみを抽出
     all_dict = dict()
-    for answer in answers:
-        json_str = extract_json(answer)
+    for raw_answer in raw_answers:
+        json_str = extract_json(raw_answer)
         try:
             json_dict = json.loads(json_str)
         except Exception as e:
             logger.warning(log.format('JSON形式で出力されていません', e))
-            logger.warning(log.format('回答が読み取れないため空の値とします', '回答：' + answer))
+            logger.warning(log.format(
+                '回答が読み取れないため空の値とします', '回答：' + raw_answer))
             json_dict = dict()
         all_dict |= json_dict
-    answers_dict = dict()
-    # 有効な項目のみを抽出
+    # アドミンインポート用の出力を生成
+    answers = dict()
     for item in items:
-        if item['name'] in all_dict.keys():
-            answers_dict[item['name']] = all_dict[item['name']]
-    # ”不明”を空文字に変換
-    for key in answers_dict.keys():
-        if answers_dict[key] == '不明':
-            answers_dict[key] = ''
-    return answers_dict
+        # 有効な回答がある場合のみ出力
+        if item['name'] not in all_dict.keys():
+            continue
+        try:
+            # 指定された型に変換
+            if item['value_type'] == 'integer':
+                answer = int(all_dict[item['name']])
+            elif item['value_type'] == 'float':
+                answer = float(all_dict[item['name']])
+            elif item['value_type'] == 'text':
+                answer = all_dict[item['name']]
+            # 値の有無をチェック
+            if answer == '':
+                answers[item['name']+output_suffixes['value_existence']] = '不明'
+                answers[item['name']+output_suffixes['for_search']] = ''
+                answers[item['name']+output_suffixes['for_display']] = ''
+            else:
+                answers[item['name']+output_suffixes['value_existence']] = 'あり'
+                answers[item['name']+output_suffixes['for_search']] = answer
+                answers[item['name']+output_suffixes['for_display']
+                        ] = str(answer) + item['unit']
+        except Exception as e:
+            answers[item['name'] + output_suffixes['value_existence']] = '不明'
+            answers[item['name']+output_suffixes['for_search']] = ''
+            answers[item['name']+output_suffixes['for_display']] = ''
+    return answers
 
 # 対象項目の情報を抽出
 
 
-def extract(input_text: str, product_name: str, items: List[Dict]) -> List[str]:
+def extract(input_text: str, product_name: str, items: List[Dict], output_suffixes: Dict) -> List[str]:
     raw_answers = []
-    item_idx = 0
-    while item_idx < len(items):
-        messages = messages_question_prompt(
-            input_text, product_name, items[item_idx:item_idx+ITEM_LIMIT])
+    for item in items:
+        messages = messages_question_prompt(input_text, product_name, item)
         logger.debug(log.format('データ項目抽出プロンプト', '\n'.join(['---[role: {role}]---\n{content}'.format(
             role=message['role'], content=message['content']) for message in messages])))
         raw_answers.append(openai_handler.send_messages(
             messages, json_mode=True))
-        item_idx += ITEM_LIMIT
-    answers = parse_answers(items, raw_answers)
-    return answers, ', '.join(raw_answers)
+    answers = parse_answers(items, raw_answers, output_suffixes)
+    return answers, raw_answers

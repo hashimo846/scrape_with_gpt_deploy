@@ -43,6 +43,6 @@ def send_messages(messages: List, json_mode=False) -> str:
         else:
             break
     logger.info(log.format(
-        'レスポンス', 'RESPONSE: {}'.format(response.usage)))
+        'レスポンス', 'RESPONSE: {}'.format(response.choices[0].message.content.strip())))
 
     return response.choices[0].message.content.strip()

@@ -17,8 +17,8 @@ SCRAPER_API_URL = 'http://api.scraperapi.com'
 # 指定したURLのページソースを取得 (premiumオプションはスクレイピング対策回避のため)
 
 
-def get_page_source(url: str = None, country_code='jp', premium='true', retry_max=5, keep_header=True, mode='GET') -> BeautifulSoup:
-    payload = {'api_key': SCRAPER_API_KEY, 'url': url,
+def get_page_source(url: str = None, country_code='jp', premium='true', retry_max=5, keep_header=True, mode='GET', render='true') -> BeautifulSoup:
+    payload = {'api_key': SCRAPER_API_KEY, 'url': url, 'render': render,
                'country_code': country_code, 'premium': premium}
     retry_count = 0
     while True:
