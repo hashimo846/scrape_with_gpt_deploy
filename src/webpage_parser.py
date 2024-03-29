@@ -3,7 +3,6 @@ from logging import DEBUG, INFO
 import log
 from typing import List, Dict
 
-# ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 # 明示的に特定の処理を行いたいサイトのドメイン一覧
@@ -13,27 +12,23 @@ DOMAIN_TYPES = {
     'rakuten': ['www.rakuten.co.jp', 'item.rakuten.co.jp']
 }
 
-# URLのドメインを判定
-
 
 def judge_domain(url: str) -> str:
-    # ドメインがどのサイトであるか判別
+    """ URLのドメインを判定 (どのサイトでもない場合はothersを返す) """
     for key in DOMAIN_TYPES.keys():
-        # ドメインがURL内に含まれているか判定
         for domain in DOMAIN_TYPES[key]:
             if domain in url:
                 return key
-    # どのサイトでもない場合はothersを返す
     return 'others'
 
-# 不要な文字を削除してテキストのみ抽出
+#
 
 
 def strip_text(text: str = '') -> str:
-    # 不要な文字を削除
+    """ 不要な文字を削除してテキストのみ抽出 """
     text = text.replace('\n', '').replace('\t', '')
     text = text.replace('\r', '').replace('\v', '').replace('\f', '')
-    # 複数個連続するスペースを一つにする
+    # NOTE: 複数個連続するスペースを一つにする
     valid_texts = []
     for word in text.split(' '):
         if word != '':
@@ -41,32 +36,27 @@ def strip_text(text: str = '') -> str:
     text = ' '.join(valid_texts)
     return text
 
-# BeautifulSoupオブジェクトから指定したこのタグからテキストを抽出（タグが見つからない場合はNoneを返す）
-
 
 def extract_text(parent: BeautifulSoup, tag: str, id: str = None) -> str:
+    """ BeautifulSoupオブジェクトから指定したこのタグからテキストを抽出（タグが見つからない場合はNoneを返す）"""
     child = parent.find(tag, id=id)
     if child != None:
         return child.text
     else:
         return None
 
-# 指定された要素の中身を削除
-
 
 def remove_content(parent: BeautifulSoup, tag: str, id: str = None) -> None:
+    """ 指定された要素の中身を削除 """
     child = parent.find(tag, id=id)
     if child != None:
         child.clear()
 
-# URLから全てのテキストを取得
-
 
 def parse_text(html_source: BeautifulSoup) -> str:
+    """ URLから全てのテキストを取得 """
     try:
-        # テキストのみ抽出
         text = html_source.text
-        # 不要な文字を削除
         text = strip_text(text)
         return text
     except Exception as e:
@@ -75,19 +65,18 @@ def parse_text(html_source: BeautifulSoup) -> str:
 
 
 def parse_amazon(html_source: BeautifulSoup) -> str:
+    """ Amazonのページから必要なテキストを抽出 """
     try:
-        # 抽出した情報を格納するDict
         extracted_texts = dict()
 
-        # <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
+        # NOTE: <html> → <body> → <div id="dp"> → <div id="dp-container"> のオブジェクトを取得
         body = html_source.find('body')
         dp = body.find('div', id='dp')
         dp_container = dp.find('div', id='dp-container')
-        # <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
+        # NOTE: <div id="dp_container"> → <div id="ppd"> → <div id="centerCol"> のオブジェクトを取得
         ppd = dp_container.find('div', id='ppd')
         centerCol = ppd.find('div', id='centerCol')
 
-        # 必要な部分からテキストを抽出
         extracted_texts['title'] = extract_text(
             parent=centerCol, tag='div', id='title_feature_div')
         overview = centerCol.find('div', id='productOverview_feature_div')
@@ -102,18 +91,15 @@ def parse_amazon(html_source: BeautifulSoup) -> str:
             parent=centerCol, tag='div', id='featurebullets_feature_div')
         extracted_texts['description'] = extract_text(
             parent=dp_container, tag='div', id='productDescription_feature_div')
-        # A+コンテンツのテキストを抽出
+        # NOTE: A+コンテンツのテキストを抽出
         for div in dp_container.find_all('div', recursive=False):
             if 'aplus' in div.get('id'):
                 extracted_texts[div.get('id')] = extract_text(
                     parent=dp_container, tag='div', id=div.get('id'))
 
-        # 抽出したテキストを結合
-        log_text = output_text = ''
+        # NOTE: 抽出したテキストを結合
+        output_text = ''
         for key in extracted_texts.keys():
-            # ログ出力用のテキスト生成
-            log_text += '--- {} ---\n'.format(key)
-            log_text += strip_text(str(extracted_texts[key])) + '\n'
             # 抽出したテキストがNoneの場合はスキップ
             if extracted_texts[key] == None:
                 continue
@@ -128,6 +114,7 @@ def parse_amazon(html_source: BeautifulSoup) -> str:
 
 
 def main():
+    """ テスト用のメイン関数 """
     pass
 
 

@@ -6,7 +6,6 @@ import log
 from typing import List, Dict
 import yaml
 
-# ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
 

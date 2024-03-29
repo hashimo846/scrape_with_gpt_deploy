@@ -12,7 +12,7 @@ logger = log.init(__name__, DEBUG)
 
 
 def main_process(sheet_url: str, target_row_idx: int) -> None:
-    # 入力情報をログ出力
+    """ 本番・テスト共通のメインプロセス """
     logger.debug(log.format(
         '入力情報', 'ターゲット行:{}\nシートURL:{}'.format(target_row_idx, sheet_url)))
 

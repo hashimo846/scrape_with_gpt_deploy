@@ -12,28 +12,28 @@ SHEET_INFO_PATH = os.getenv('SHEET_INFO_PATH')
 
 
 class Spreadsheet:
-    # NOTE: 初期化にはスプシURLが必須
+    """ スプレッドシートを保持・操作するクラス """
+
     def __init__(self, sheet_url: str) -> None:
-        # NOTE: APIの認証
+        """ コンストラクトにて認証とシートの取得をする """
+        # NOTE: gspreadの認証
         gspread_client = self.__authorize_gspread()
-        # NOTE: シート情報を取得
         with open(SHEET_INFO_PATH) as file:
             self.sheet_info = yaml.safe_load(file)
-        # NOTE: スプレッドシート取得
+        # NOTE: シートを取得
         self.spreadsheet = gspread_client.open_by_url(sheet_url)
-        # NOTE: 対象シートとテーブルを取得
         self.sheets, self.tables = dict(), dict()
         for sheet_key in ['master', 'research', 'output']:
             self.__get_sheet_table(sheet_key)
 
-    # NOTE: シートとテーブルを取得
     def __get_sheet_table(self, sheet_key: str) -> Tuple[gspread.Worksheet, List]:
+        """ シートとテーブルを取得 """
         self.sheets[sheet_key] = self.spreadsheet.worksheet(
             self.sheet_info[sheet_key]['name'])
         self.tables[sheet_key] = self.sheets[sheet_key].get_all_values()
 
-    # NOTE： シートから全項目情報を取得
     def get_master_items(self) -> Dict:
+        """ シートから全項目情報を取得 """
         try:
             master_columns = self.__get_master_columns()
         except Exception as e:
@@ -53,8 +53,8 @@ class Spreadsheet:
             logger.error(log.format('マスタ情報解析失敗', e))
             return None
 
-    # NOTE: スプシの入力部分を取得
     def get_inputs(self, target_row_idx: int, sheet_key: str = 'research') -> Dict:
+        """ スプシの入力部分を取得 """
         try:
             # NOTE: 入力となるカラムのインデックスを特定
             header_row_idx = self.sheet_info[sheet_key]['header_row'] - 1
@@ -76,8 +76,8 @@ class Spreadsheet:
             logger.error(log.format('商品情報取得失敗', e))
             return None
 
-    # NOTE: 実行フィードバックの出力部分を取得
     def get_feedback(self, target_row_idx: int, sheet_key: str = 'research') -> Dict:
+        """ 実行フィードバックの出力部分を取得 """
         try:
             # NOTE: 対象の列を特定
             target_columns = self.sheet_info[sheet_key]['output_columns']
@@ -93,8 +93,8 @@ class Spreadsheet:
             logger.error(log.format('出力情報取得失敗', e))
             return None
 
-    # NOTE： 対象カラムのインデックスをValueから取得
     def __get_target_columns_idx(self, sheet_key: str, target_columns: List) -> Dict:
+        """ 対象カラムのインデックスをValueから取得 """
         header_row_idx = self.sheet_info[sheet_key]['header_row'] - 1
         header_row = self.tables[sheet_key][header_row_idx]
         columns_idx = dict()
@@ -103,8 +103,8 @@ class Spreadsheet:
                 columns_idx[header_value] = header_idx
         return columns_idx
 
-    # NOTE: 実行フィードバックの出力部分の書き換え
     def set_feedback(self, target_row_idx: int, feedback: Dict, sheet_key: str = 'research') -> None:
+        """ 実行フィードバックの出力部分の書き換え """
         target_columns = self.sheet_info[sheet_key]['output_columns']
         target_columns_idx = self.__get_target_columns_idx(
             sheet_key, target_columns.values())
@@ -120,16 +120,16 @@ class Spreadsheet:
         self.sheets[sheet_key].update([target_row], '{}:{}'.format(start_cell, end_cell),
                                       value_input_option='USER_ENTERED')
 
-    # NOTE: 出力部分のヘッダーを生成
     def generate_output_headers(self, item_names: List[str], sheet_key: str = 'output') -> List[str]:
+        """ 出力部分のヘッダーを生成 """
         output_headers = []
         for item_name in item_names:
             for suffix in self.sheet_info[sheet_key]['output_header_suffixes'].values():
                 output_headers.append(item_name + suffix)
         return output_headers
 
-    # NOTE: 抽出結果出力のためのヘッダーを出力(すでにヘッダー内に存在するものは項目は無視)
     def set_output_header(self, output_headers: List[str], sheet_key: str = 'output') -> None:
+        """ 抽出結果出力のためのヘッダーを出力(すでにヘッダー内に存在するものは項目は無視) """
         header_row_idx = self.sheet_info[sheet_key]['header_row'] - 1
         header_row = self.tables[sheet_key][header_row_idx]
         for output_header in output_headers:
@@ -142,8 +142,8 @@ class Spreadsheet:
                                       value_input_option='USER_ENTERED')
         self.__get_sheet_table(sheet_key='output')
 
-    # NOTE: スプシの出力部分を書き換え
     def set_output(self, target_row_idx: int, output: Dict, sheet_key: str = 'output') -> None:
+        """ スプシの出力部分を書き換え """
         target_columns_idx = self.__get_target_columns_idx(
             sheet_key='output', target_columns=output.keys())
         if len(target_columns_idx) == 0:
@@ -163,10 +163,11 @@ class Spreadsheet:
                                       value_input_option='USER_ENTERED')
 
     def get_output_suffixes(self) -> Dict:
+        """ 出力部分のサフィックスを取得 """
         return self.sheet_info['output']['output_header_suffixes']
 
-    # NOTE: 項目情報シートの各カラムの情報を取得
     def __get_master_columns(self, sheet_key: str = 'master') -> Dict:
+        """ 項目情報シートの各カラムの情報を取得 """
         logger.info(log.format('スプレッドシートからマスタ情報取得中'))
         master_columns = dict()
         header_row_idx = self.sheet_info[sheet_key]['header_row'] - 1
@@ -179,12 +180,12 @@ class Spreadsheet:
                     break
         return master_columns
 
-    # NOTE: 指定したカラムの情報を取得
     def __get_column(self, table: List, idx: int) -> List:
+        """ 指定したカラムの情報を取得 """
         return [row[idx] for row in table]
 
-    # NOTE: 二値項目を取得
     def __get_boolean_items(self, master_columns: Dict) -> List:
+        """ 二値項目を取得 """
         items, i = [], 0
         target_type_name = self.sheet_info['master']['data_types']['boolean']
         while i < len(master_columns['formats']):
@@ -198,8 +199,8 @@ class Spreadsheet:
             i += 1
         return items
 
-    # NOTE: データ項目を取得
     def __get_data_items(self, master_columns: Dict) -> List:
+        """ データ項目を取得 """
         items, i = [], 0
         target_types = ['text', 'integer', 'float']
         data_types = self.sheet_info['master']['data_types']
@@ -216,8 +217,8 @@ class Spreadsheet:
             i += 1
         return items
 
-    # NOTE: 選択項目を取得
     def __get_option_items(self, master_columns: Dict) -> List:
+        """ 選択項目を取得 """
         items, i = [], 0
         target_type_name = self.sheet_info['master']['data_types']['option']
         while i < len(master_columns['formats']):
@@ -240,8 +241,8 @@ class Spreadsheet:
                 i += 1
         return items
 
-    # NOTE: gspreadの認証
     def __authorize_gspread(self, credential_path: str = GOOGLE_CREDENTIAL_PATH) -> gspread.Client:
+        """ gspreadの認証 """
         credentials = service_account.Credentials.from_service_account_file(
             credential_path,
             scopes=[
@@ -252,28 +253,10 @@ class Spreadsheet:
         gspread_client = gspread.authorize(credentials)
         return gspread_client
 
-# NOTE: テスト用
-
 
 def main():
-    with open('test_sheet.yml') as file:
-        test_sheet = yaml.safe_load(file)
-
-    spreadsheet = Spreadsheet(test_sheet['url'])
-    logger.debug(log.format('マスタ', spreadsheet.get_master_items()))
-    logger.debug(log.format('入力', spreadsheet.get_inputs(1)))
-
-    input = spreadsheet.get_feedback(1)
-    logger.debug(log.format('出力部分', input))
-    feedback = dict()
-    feedback['execute_button'] = 'false'
-    feedback['execute_status'] = 'ng'
-    feedback['extract_result'] = 'エラー'
-    spreadsheet.set_feedback(1, feedback)
-
-    output = {'商品名:値の有無': 'あり', '商品名:検索用': 'iPhone15', '商品名:表示用': 'iPhone 15', '価格:値の有無': 'あり',
-              '価格:検索用': '1500', '価格:表示用': '1500円',	'在庫数:値の有無': '不明', '在庫数:検索用': '', '在庫数:表示用': ''}
-    spreadsheet.set_output(1, output)
+    """ テスト用のメイン関数 """
+    pass
 
 
 if __name__ == '__main__':

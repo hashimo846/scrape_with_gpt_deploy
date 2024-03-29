@@ -5,24 +5,22 @@ import os
 from time import sleep
 from typing import List
 
-# ロガーの初期化
 logger = log.init(__name__, DEBUG)
 
-# 使用するAIモデル
+# NOTE: 使用するAIモデル
 MODEL = os.getenv("OPENAI_MODEL")
 
-# OpenAI APIの認証
+# NOTE: OpenAI APIの認証
 openai.organization = os.getenv("OPENAI_ORGANIZATION")
 openai.api_key = os.getenv("OPENAI_API_KEY")
 client = openai.Client()
 
-# GPTの回答の最大トークン数
+# NOTE: GPTの回答の最大トークン数
 RESPONCE_MAX_TOKEN = int(os.getenv("RESPONCE_MAX_TOKEN"))
-
-# メッセージ群を送信して回答を取得
 
 
 def send_messages(messages: List, json_mode=False) -> str:
+    """ メッセージ群を送信して回答を取得 """
     while True:
         try:
             response = client.chat.completions.create(
