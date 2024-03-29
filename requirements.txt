@@ -4,6 +4,6 @@ openai==1.2.2
 langchain==0.0.309
 tiktoken==0.5.1
 google-auth==2.23.2
-gspread==5.11.3
+gspread==6.0.0
 functions_framework==3.4.0
 setuptools==58.1.0
