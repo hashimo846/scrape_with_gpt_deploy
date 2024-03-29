@@ -9,7 +9,7 @@ from urllib.parse import urlencode
 
 logger = log.init(__name__, DEBUG)
 
-# ScraperAPIのAPIのキー
+# ScraperAPI認証用
 SCRAPER_API_KEY = os.environ['SCRAPER_API_KEY']
 SCRAPER_API_URL = 'http://api.scraperapi.com'
 
@@ -40,7 +40,7 @@ def get_page_source(url: str = None, country_code='jp', premium='true', retry_ma
         except Exception as e:
             logger.error(log.format(
                 'アクセス失敗', 'URL:{}\ERROR MESSAGE:{}'.format(url, e)))
-            # リトライ回数の上限に達したらNoneを返して終了
+            # NOTE: リトライ回数の上限に達したらNoneを返して終了
             if retry_count >= retry_max:
                 logger.error(log.format(
                     'アクセス失敗', 'URL:{}\nERROR MESSAGE:{}'.format(url, e)))
